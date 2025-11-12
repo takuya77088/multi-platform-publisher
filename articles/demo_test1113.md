@@ -11,7 +11,6 @@ platforms:
   devto: true   # Dev.toに投稿
 ---
 
-# 記事自動化ーテスト
 
 ## はじめに
 この記事ではGitHub Actions自動化テストしたいです1
