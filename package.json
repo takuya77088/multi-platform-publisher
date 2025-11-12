@@ -32,7 +32,7 @@
     "js-yaml": "^4.1.0"
   },
   "devDependencies": {
-    "@qiita/qiita-cli": "^1.0.0",
+    "@qiita/qiita-cli": "^1.6.2",
     "concurrently": "^8.2.0",
     "zenn-cli": "^0.1.150"
   },
