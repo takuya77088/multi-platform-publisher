@@ -87,7 +87,7 @@ QAエンジニアの仕事も格段に楽になります。AIアシスタント�
 
 ### ステップ2：ApidogプロジェクトIDを見つける
 
-![ApidogプロジェクトIDを取る](https://raw.githubusercontent.com/takuya77088/multi-platform-publisher/main/images/20251113-apidog-ProjectlD-2.png)
+![ApidogプロジェクトIDを取る](https://raw.githubusercontent.com/takuya77088/multi-platform-publisher/main/images/20251113-apidog-projectid-2.png)
 
 1. Apidogで目的のプロジェクトを開く
 2. 左のサイドバーで設定をクリック
@@ -164,7 +164,7 @@ Windowsユーザーの場合、上記の設定が機能しないときは、次�
   - 「MCPを使用してAPIドキュメントを取得し、利用可能なすべてのエンドポイントをリストしてください」
   - 「APIドキュメントに基づいて、ユーザーモデルにはどのフィールドがありますか？」
 
-![テストする](https://raw.githubusercontent.com/takuya77088/multi-platform-publisher/main/images/20251113-apidog-chat-4.png)
+![テストする](https://raw.githubusercontent.com/takuya77088/multi-platform-publisher/main/images/20251113-apidog-chat-4.jpeg)
 
 統合が正しく機能していれば、AIアシスタントは手動で参照したり説明したりすることなく、APIドキュメントから情報にアクセスして提供できるはずです。これ、本当に便利ですよ！
 
