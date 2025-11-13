@@ -87,7 +87,7 @@ QAエンジニアの仕事も格段に楽になります。AIアシスタント�
 
 ### ステップ2：ApidogプロジェクトIDを見つける
 
-![ApidogプロジェクトIDを取る](https://raw.githubusercontent.com/takuya77088/multi-platform-publisher/main/images/20251113-apidog-projectid-2.png)
+![ApidogプロジェクトIDを取る](https://raw.githubusercontent.com/takuya77088/multi-platform-publisher/main/images/20251113-sample2.png)
 
 1. Apidogで目的のプロジェクトを開く
 2. 左のサイドバーで設定をクリック
