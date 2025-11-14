@@ -3,8 +3,12 @@
     "qiita_id": "6018c9c0ce57af121478",
     "qiita_url": "https://qiita.com/kazuya828/items/6018c9c0ce57af121478"
   },
+<<<<<<< HEAD
   "apidog-ai-testcase": {
     "qiita_id": "12323307010c82c2644d",
     "qiita_url": "https://qiita.com/kazuya828/items/12323307010c82c2644d"
   }
+=======
+  "apidog-ai-testcase": {}
+>>>>>>> c5dae9c (Dev.to retry publish)
 }
