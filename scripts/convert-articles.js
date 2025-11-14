@@ -83,6 +83,21 @@ function getAllArticlesForConversion() {
   });
 }
 
+// --- 追加: 各プラットフォームのタグ数制限処理 ---
+function limitTags(tags, platform) {
+  if (!Array.isArray(tags)) return [];
+
+  const limits = {
+    qiita: 5,
+    zenn: 5,
+    devto: 4
+  };
+
+  const max = limits[platform] ?? tags.length;
+  return tags.slice(0, max); // 超過分は自動カット
+}
+
+
 // Qiita形式に変換
 function convertToQiita(article) {
   const { frontmatter, content } = article;
@@ -93,8 +108,13 @@ function convertToQiita(article) {
   }
   
   // Qiita用のYAMLフロントマターを作成（標準フォーマットに準拠）
-  const qiitaTags = frontmatter.topics ? frontmatter.topics.map(tag => `  - ${tag}`).join('\n') : '';
+  //const qiitaTags = frontmatter.topics ? frontmatter.topics.map(tag => `  - ${tag}`).join('\n') : '';
+  // Qiitaはタグ最大5個まで
+  const qiitaTagList = limitTags(frontmatter.topics || [], 'qiita');
+  const qiitaTags = qiitaTagList.map(tag => `  - ${tag}`).join('\n');
+
   const qiitaFrontmatterYaml = `title: ${frontmatter.title}
+
 tags:
 ${qiitaTags}
 private: false
@@ -142,17 +162,23 @@ slide: false`;
 
 // Dev.to形式に変換
 function convertToDevTo(article) {
+
   const { frontmatter, content } = article;
+
+  // Dev.to最多4个tags
+  const devtoTags = frontmatter.topics ? frontmatter.topics.slice(0, 4) : [];
   
   // プラットフォーム選択チェック
   if (frontmatter.platforms && !frontmatter.platforms.devto) {
     return null;
   }
-  
+
+  // Dev.toはタグ最大4個まで
   const devtoFrontmatter = {
     title: frontmatter.title,
     published: true,
-    tags: frontmatter.topics ? frontmatter.topics.join(', ') : '',
+    //tags: frontmatter.topics ? frontmatter.topics.join(', ') : '',
+    tags: devtoTags.join(', '), // 使用截断后的tags
     canonical_url: null,
     description: `${content.substring(0, 150)}...`
   };
