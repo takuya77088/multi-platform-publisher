@@ -1,6 +1,6 @@
 ---
 title: "コスト削減と自由度アップ！商用ツールからオープンソースへの乗り換え15選"
-emoji: "⚡"
+emoji: "🛠️"
 type: "tech"
 topics: ["オープンソース","コスト削減","開発効率化","自社ホスティング","APIテスト"]
 published: true  # Zenn公開設定（まず false で下書き）
@@ -20,7 +20,7 @@ platforms:
 
 
 
-## 1. Postman → Hoppscotch / Bruno
+## 1. Postman → Hoppscotch / Bruno / Apicat
 
 **Postmanの問題点**：API開発の定番ツールですが、近年はリソース消費が増加し起動が遅くなっています。また、チーム機能やワークスペース共有などの重要機能は有料プランが必要で、予算に制約のあるチームには負担になることも。
 
