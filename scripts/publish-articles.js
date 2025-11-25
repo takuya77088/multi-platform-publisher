@@ -88,7 +88,6 @@ async function publishToDevTo(article) {
       body_markdown: parsed.content,
       published: parsed.data.published || true,
       tags: parsed.data.topics ? parsed.data.topics.slice(0, 4) : [],
-      slug: article.key,
     },
   };
 

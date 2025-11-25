@@ -145,8 +145,6 @@ templates/
 # Configuration files with secrets
 config/secrets.json
 config/local.json
-# 公開された記事metadataを無視
-config/published-articles.json
 *.key
 *.pem
 
