@@ -159,7 +159,7 @@ resource "aws_instance" "web" {
 
 ### Apidog
 
-![画像](https://raw.githubusercontent.com/takuya77088/multi-platform-publisher/main/images/251125-Apidog-9.png)
+![Apidog](https://raw.githubusercontent.com/takuya77088/multi-platform-publisher/main/images/251125-Apidog-9.png)
 効率的な
 API開発には、設計書作成、テストケース作成、ドキュメント更新など、多くの作業が必要だ。
 

@@ -46,7 +46,10 @@ jobs:
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git pull --no-rebase
-        git add config/published-articles.json
+        # 这里删除这行！
+        # git add config/published-articles.json
+        # 改为只提交真正变化的文件
+        git add .
         
         # 変更がある場合のみコミット
         if ! git diff --staged --quiet; then
