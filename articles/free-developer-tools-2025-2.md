@@ -1,0 +1,198 @@
+---
+title: "現役エンジニアが厳選！初心者からプロまで使える無料開発ツール10選"
+emoji: "🛠️"
+type: "tech"
+topics: ["オープンソース","エンジニア","開発効率化","API開発","無料開発ツール"]
+published: true  # Zenn公開設定（まず false で下書き）
+
+# マルチプラットフォーム投稿設定
+platforms:
+  qiita: true   # Qiitaに投稿
+  devto: true   # Dev.toに投稿
+---
+
+
+## はじめに
+
+Linux、Docker、Pythonなど、現役エンジニアが実際に使っている無料ツール10選を紹介。開発環境からAPI設計、インフラ管理まで、すべて無料で始められるツールを厳選。
+
+個人開発者にも、これからエンジニアを目指す人にも役立つ内容になっている。それぞれのツールの特徴と使いどころを見ていこう。
+
+
+## 開発の基盤を支えるツール群
+
+### Linux
+
+![画像](https://raw.githubusercontent.com/takuya77088/multi-platform-publisher/main/images/251125-linux-1.png)
+
+オープンソースOSの代表格。サーバー構築や開発環境として、今でも圧倒的なシェアを誇っている。
+
+AWSもGCPも、ほとんどのクラウドサービスがLinuxベースで動いている。コマンドラインに慣れるまで時間はかかるが、一度身につければ開発の幅が大きく広がる。
+
+**使いどころ：**
+- サーバー環境の構築
+- Docker開発環境
+- 学習用の仮想マシン
+
+[公式サイト](https://www.linux.org/)
+
+### Python
+
+![画像](https://raw.githubusercontent.com/takuya77088/multi-platform-publisher/main/images/251125-python-2.png)
+
+AI、データ分析、Web開発、自動化スクリプト——Pythonでできないことを探す方が難しい。
+
+シンプルなコードで多くのことができる。例えば、APIからデータを取得するコードはこんな感じだ：
+
+```python
+# 簡単なAPIリクエストの例
+import requests
+
+response = requests.get('https://api.example.com/data')
+print(response.json())
+```
+
+たった3行でAPIからデータを取得できる。この手軽さがPythonの魅力だ。
+
+[公式サイト](https://www.python.org/)
+
+### VSCode
+
+![画像](https://raw.githubusercontent.com/takuya77088/multi-platform-publisher/main/images/251125-visualstudio-3.png)
+
+マイクロソフトが提供する無料エディタ。拡張機能が豊富で、どんな言語にも対応できる。
+
+Git統合とデバッグ機能が特に優秀で、開発効率が大きく向上する。拡張機能を追加すれば、さらに便利になる。
+
+**おすすめ拡張機能：**
+- Prettier（コード整形）
+- GitLens（Git履歴の可視化）
+- REST Client（API テスト）
+
+[公式サイト](https://code.visualstudio.com/)
+
+## Webサーバーの二大巨頭
+
+### nginx
+
+![画像](https://raw.githubusercontent.com/takuya77088/multi-platform-publisher/main/images/251125-nginx-4.png)
+
+高速で軽量なWebサーバー。リバースプロキシやロードバランサーとしても使える。
+
+設定ファイルの書き方は最初戸惑うかもしれないが、一度理解すればその柔軟性に驚くはずだ。
+
+```nginx
+# シンプルなリバースプロキシ設定
+server {
+    listen 80;
+    location / {
+        proxy_pass http://localhost:3000;
+    }
+}
+```
+
+[公式サイト](https://nginx.org/)
+
+### Apache
+
+![画像](https://raw.githubusercontent.com/takuya77088/multi-platform-publisher/main/images/251125-Apache-5.png)
+
+世界中のWebサイトで使われている定番サーバー。設定が豊富で、ドキュメントも充実している。
+
+nginxと比較されることが多いが、用途に応じて使い分けるのが正解だ。.htaccessが使えるのは、Apacheの大きなメリットだ。
+
+[公式サイト](https://httpd.apache.org/)
+
+## インフラを変えた革命的ツール
+
+### Docker
+
+
+![画像](https://raw.githubusercontent.com/takuya77088/multi-platform-publisher/main/images/251125-Docker-6.png)
+
+アプリケーションをコンテナ化して、どこでも同じ環境で動かせる。
+
+「ローカルでは動くのに本番で動かない」という問題を解決してくれる。環境の差異による不具合がほぼなくなるのが大きなメリットだ。
+
+```dockerfile
+# シンプルなDockerfile例
+FROM python:3.9
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+COPY . .
+CMD ["python", "app.py"]
+```
+
+[公式サイト](https://www.docker.com/)
+
+### Kubernetes
+
+![画像](https://raw.githubusercontent.com/takuya77088/multi-platform-publisher/main/images/251125-Kubernetes-7.png)
+
+複数のDockerコンテナを自動管理するオーケストレーションツール。
+
+学習コストは高いが、マイクロサービスアーキテクチャを採用するなら避けては通れない。大規模なシステム運用には必須のツールだ。
+
+[公式サイト](https://kubernetes.io/)
+
+### Terraform
+
+
+![画像](https://raw.githubusercontent.com/takuya77088/multi-platform-publisher/main/images/251125-Terraform-8.png)
+
+HashiCorp製のIaC（Infrastructure as Code）ツール。AWSやGCPのインフラをコードで管理できる。
+
+手動でのインフラ構築は効率が悪い。Terraformなら、インフラの変更履歴もGitで管理でき、チーム開発がスムーズになる。
+
+```hcl
+# EC2インスタンスの定義例
+resource "aws_instance" "web" {
+  ami           = "ami-0c55b159cbfafe1f0"
+  instance_type = "t2.micro"
+}
+```
+
+[GitHub](https://github.com/hashicorp/terraform)
+
+## チーム開発を支えるプラットフォーム
+
+### Apidog
+
+![Apidog](https://raw.githubusercontent.com/takuya77088/multi-platform-publisher/main/images/251125-Apidog-9.png)
+効率的な
+API開発には、設計書作成、テストケース作成、ドキュメント更新など、多くの作業が必要だ。
+
+Apidogは、**API設計・テスト・ドキュメント作成を一つのツールで完結**できる。AIを活用した自動化機能も優秀で、開発効率が大幅に向上する。
+
+**実際の使用例：**
+
+1. OpenAPI仕様をインポート
+2. AIが自動でテストケースを生成
+3. そのままチームで共有
+
+PostmanやSwaggerを使っていた人なら、その便利さがすぐに分かるはずだ。無料プランでも十分な機能があり、個人開発者にもおすすめだ。
+
+[公式サイト](https://apidog.com/ja/)
+
+
+### GitHub
+
+
+![画像](https://raw.githubusercontent.com/takuya77088/multi-platform-publisher/main/images/251125-GitHub-10.png)
+
+ソースコードを管理・共有できる開発者の定番プラットフォーム。
+
+GitHubアカウントは、エンジニアとしての実績を示す履歴書のようなものだ。オープンソースプロジェクトへの貢献や、自分のコードを公開する場として欠かせない。
+
+[公式サイト](https://github.com/)
+
+## まとめ：
+
+ここで紹介した10のツールは、すべて**無料でスタートできる**。
+
+Linuxで環境を作り、Pythonでコードを書き、ApidogでAPIを設計し、Dockerでデプロイする——これらすべてが無料で実現できる。お金がなくても、アイデアと技術があれば何でも作れる時代だ。
+
+有料プランやエンタープライズ版もあるが、まずは無料で試してみることをおすすめする。実際に使ってみて、自分に合うかどうかを確かめることが、エンジニアとしての成長につながる。
+
+**この記事が役に立ったら、ぜひシェアしてほしい。質問やコメントがあれば、気軽に教えてくれ。**
