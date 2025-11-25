@@ -160,8 +160,8 @@ resource "aws_instance" "web" {
 ### Apidog
 
 ![Apidog](https://raw.githubusercontent.com/takuya77088/multi-platform-publisher/main/images/251125-Apidog-9.png)
-効率的な
-API開発には、設計書作成、テストケース作成、ドキュメント更新など、多くの作業が必要だ。
+
+効率的なAPI開発には、設計書作成、テストケース作成、ドキュメント更新など、多くの作業が必要だ。
 
 Apidogは、**API設計・テスト・ドキュメント作成を一つのツールで完結**できる。AIを活用した自動化機能も優秀で、開発効率が大幅に向上する。
 
