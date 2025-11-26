@@ -3,11 +3,11 @@ title: "現役エンジニアが厳選！初心者からプロまで使える無
 emoji: "🛠️"
 type: "tech"
 topics: ["オープンソース","エンジニア","開発効率化","API開発","無料開発ツール"]
-published: true  # Zenn公開設定（まず false で下書き）
+published: false  # Zenn公開設定（まず false で下書き）
 
 # マルチプラットフォーム投稿設定
 platforms:
-  qiita: true   # Qiitaに投稿
+  qiita: false   # Qiitaに投稿
   devto: true   # Dev.toに投稿
 ---
 
