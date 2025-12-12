@@ -138,49 +138,130 @@ function loadMarkdownFiles() {
 // ------------------------------------------------------------
 // メイン処理
 // ------------------------------------------------------------
+// ------------------------------------------------------------
+// メイン処理
+// ------------------------------------------------------------
 async function main() {
   console.log("🚀 Multi-platform publishing started...\n");
 
+  // 元記事（Zenn形式）のリストを取得 - これをマスターリストとする
   const articles = loadMarkdownFiles();
 
   for (const article of articles) {
-    const { key, content, frontmatter } = article;
+    const { key, frontmatter } = article;
 
     if (!frontmatter.title) {
       console.log(`❌ タイトルが存在しないためスキップしました: ${key}`);
       continue;
     }
 
-    const title = frontmatter.title;
-    const tags = frontmatter.topics || [];
-
     console.log("\n============================================================");
-    console.log(`📄 処理対象記事: ${title}`);
+    console.log(`📄 処理対象記事: ${frontmatter.title} (${key})`);
     console.log("============================================================");
 
-    try {
-      const qiitaRes = await publishToQiita(key, title, content, tags);
-      const devtoRes = await publishToDevTo(article);
+    // --- Qiita 処理 ---
+    let qiitaRes = null;
+    const qiitaConvertedPath = path.join(process.cwd(), "qiita", "public", `${key}.md`);
 
-      // メタデータ更新
-      publishedMeta[key] = {
-        qiita_id: qiitaRes?.id,
-        qiita_url: qiitaRes?.url,
-        devto_id: devtoRes?.id,
-        devto_url: devtoRes?.url,
+    // 変換済みファイルが存在するか確認（存在しない場合は、変更がないか変換エラーなのでスキップ）
+    if (fs.existsSync(qiitaConvertedPath)) {
+      console.log(`  🔍 Qiita用変換済みファイルを検出: ${qiitaConvertedPath}`);
+      const qiitaContent = fs.readFileSync(qiitaConvertedPath, "utf8");
+      const qiitaParsed = matter(qiitaContent);
+
+      // 変換済みファイルからタグなどを取得
+      const qiitaTags = qiitaParsed.data.tags || [];
+      // Note: qiitaTags might be array or object from YAML? usually array.
+      // convert-articles.js creates explicit YAML tags list. matter() should parse it as array?
+      // Actually convert-articles.js writes `tags: \n  - tag1` etc. gray-matter parses this as array.
+
+      // 公開実⾏
+      qiitaRes = await publishToQiita(key, qiitaParsed.data.title, qiitaParsed.content, qiitaTags);
+    } else {
+      console.log(`  ⏭️  Qiita用変換済みファイルが見つからないためスキップ（変更なしか、変換対象外）`);
+    }
+
+    // --- Dev.to 処理 ---
+    let devtoRes = null;
+    const devtoConvertedPath = path.join(process.cwd(), "dev-to", `${key}.md`);
+
+    if (fs.existsSync(devtoConvertedPath)) {
+      console.log(`  🔍 Dev.to用変換済みファイルを検出: ${devtoConvertedPath}`);
+
+      // 重要: convert-articles.js で生成されたファイルを読み込む
+      // そこには既に制限されたタグや整形されたFrontmatterが含まれている
+      const devtoContent = fs.readFileSync(devtoConvertedPath, "utf8");
+      const devtoParsed = matter(devtoContent);
+
+      // Dev.to用のpayload作成
+      const payload = {
+        article: {
+          title: devtoParsed.data.title,
+          body_markdown: devtoParsed.content,
+          published: devtoParsed.data.published !== false, // Default true unless false
+          tags: devtoParsed.data.tags || [], // Convert済みファイルは単純な配列または文字列(matterの解析次第)
+          // YAML dumpで `tags: [a, b]` と書いた場合、此处は配列になる
+        }
       };
 
-      console.log(
-        `✅ 同期完了: ${key} (Qiita: ${qiitaRes?.isNew ? "新規" : "更新"}, Dev.to: ${devtoRes?.isNew ? "新規" : "更新"})`
-      );
-    } catch (err) {
-      console.error(`❌ 公開処理中にエラーが発生しました (${key})`, err.response?.data || err);
+      devtoRes = await publishToDevToWithPayload(key, payload);
+    } else {
+      console.log(`  ⏭️  Dev.to用変換済みファイルが見つからないためスキップ（変更なしか、変換対象外）`);
+    }
+
+    // --- メタデータ更新 (安全なマージ) ---
+    // 成功した場合のみIDを更新し、既存のデータは保持する
+    if (qiitaRes || devtoRes) {
+      if (!publishedMeta[key]) publishedMeta[key] = {};
+
+      if (qiitaRes) {
+        publishedMeta[key].qiita_id = qiitaRes.id;
+        publishedMeta[key].qiita_url = qiitaRes.url;
+      }
+
+      if (devtoRes) {
+        publishedMeta[key].devto_id = devtoRes.id;
+        publishedMeta[key].devto_url = devtoRes.url;
+      }
+
+      console.log(`  📦 メタデータをメモリ内で更新しました`);
     }
   }
 
+  // 最後に一括保存
   fs.writeFileSync(META_FILE, JSON.stringify(publishedMeta, null, 2));
-  console.log(`\n📦 メタデータを保存しました → ${META_FILE}`);
-  console.log("\n🎉 全プラットフォームへの公開処理が完了しました\n");
+  console.log(`\n📦 メタデータファイルをディスクに保存しました → ${META_FILE}`);
+  console.log("\n🎉 公開処理が完了しました\n");
+}
+
+// Helper: Refactored Dev.to publish that takes payload directly
+async function publishToDevToWithPayload(key, payload) {
+  const devKey = process.env.DEV_TO_API_KEY;
+  if (!devKey) {
+    console.log("  ⏭️  DEV_TO_API_KEY 未設定");
+    return null;
+  }
+
+  const existingId = publishedMeta[key]?.devto_id;
+  const headers = { "api-key": devKey, "Content-Type": "application/json" };
+
+  try {
+    if (existingId) {
+      console.log(`  🔄 Dev.to: 更新リクエスト送信... (ID: ${existingId})`);
+      const res = await axios.put(`https://dev.to/api/articles/${existingId}`, payload, { headers });
+      console.log(`    ✅ Dev.to 更新成功: ${res.data.url}`);
+      return { id: res.data.id, url: res.data.url, isNew: false };
+    } else {
+      console.log(`  📝 Dev.to: 新規作成リクエスト送信...`);
+      const res = await axios.post("https://dev.to/api/articles", payload, { headers });
+      console.log(`    ✅ Dev.to 作成成功: ${res.data.url}`);
+      return { id: res.data.id, url: res.data.url, isNew: true };
+    }
+  } catch (error) {
+    const msg = error.response?.data?.error || error.message;
+    console.error(`  ❌ Dev.to エラー: ${msg}`);
+    return null;
+  }
 }
 
 // ------------------------------------------------------------

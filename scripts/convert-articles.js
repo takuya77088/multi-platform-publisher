@@ -162,40 +162,34 @@ slide: false`;
 
 // Dev.to形式に変換
 function convertToDevTo(article) {
-
   const { frontmatter, content } = article;
 
-  // Dev.to最多4个tags
-  const devtoTags = frontmatter.topics ? frontmatter.topics.slice(0, 4) : [];
-  
   // プラットフォーム選択チェック
   if (frontmatter.platforms && !frontmatter.platforms.devto) {
     return null;
   }
 
-  // Dev.toはタグ最大4個まで
+  // Dev.to最多4个tags
+  const devtoTags = frontmatter.topics ? frontmatter.topics.slice(0, 4) : [];
+  
+  // フロントマター構築
   const devtoFrontmatter = {
     title: frontmatter.title,
     published: true,
-    //tags: frontmatter.topics ? frontmatter.topics.join(', ') : '',
-    tags: devtoTags.join(', '), // 使用截断后的tags
+    tags: devtoTags, // 配列のまま渡す（matter.stringify/yaml.dumpが処理する）
     canonical_url: null,
-    description: `${content.substring(0, 150)}...`
+    description: content.substring(0, 150).replace(/\n/g, ' ') + '...'
   };
-  
+
+  // 必須: js-yaml を使って安全に YAML 化（クオーテーション問題などを回避）
+  // 以前の手動文字列結合は廃止
+  const yaml = require('js-yaml');
+  const frontmatterStr = yaml.dump(devtoFrontmatter, { lineWidth: -1 }).trim();
+
   let devtoContent = content;
   
+  // 画像パスの調整などをここで行う場合は追加
   
-  const frontmatterStr = Object.entries(devtoFrontmatter)
-    .map(([key, value]) => {
-      // 文字列値はクォートで囲む（nullやbooleanは除く）
-      if (typeof value === 'string' && value !== null) {
-        return `${key}: "${value}"`;
-      }
-      return `${key}: ${value}`;
-    })
-    .join('\n');
-    
   return {
     frontmatter: devtoFrontmatter,
     content: devtoContent,
