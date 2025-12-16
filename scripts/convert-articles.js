@@ -3,6 +3,13 @@ const path = require('path');
 const matter = require('gray-matter');
 const { execSync } = require('child_process');
 
+// 公開済み記事メタデータの読み込み
+const META_FILE = path.join(process.cwd(), 'config', 'published-articles.json');
+let publishedMeta = {};
+if (fs.existsSync(META_FILE)) {
+  publishedMeta = JSON.parse(fs.readFileSync(META_FILE, 'utf8'));
+}
+
 // Git差分から変更された記事のみ取得
 function getModifiedArticles(forceAll = false) {
   // テストモード：全記事を対象とする
@@ -233,6 +240,28 @@ function main() {
         fs.mkdirSync(qiitaDir, { recursive: true });
       }
       
+      // 記事キー（ファイル名から拡張子を除いたもの）
+      const articleKey = article.slug;
+      const qiitaId = publishedMeta[articleKey]?.qiita_id;
+      
+      // 既存のIDベースのファイルを削除（重複を避けるため）
+      if (qiitaId) {
+        const oldIdPath = path.join(qiitaDir, `${qiitaId}.md`);
+        if (fs.existsSync(oldIdPath)) {
+          console.log(`  🗑️  既存のIDベースファイルを削除: ${qiitaId}.md`);
+          fs.unlinkSync(oldIdPath);
+        }
+        
+        // frontmatterにIDを設定
+        const yaml = require('js-yaml');
+        const parsed = matter(qiitaArticle.fullContent);
+        parsed.data.id = qiitaId;
+        parsed.data.updated_at = publishedMeta[articleKey]?.qiita_url ? new Date().toISOString() : '';
+        const frontmatterStr = yaml.dump(parsed.data, { lineWidth: -1 }).trim();
+        qiitaArticle.fullContent = `---\n${frontmatterStr}\n---\n\n${parsed.content}`;
+      }
+      
+      // 統一されたファイル名を使用（常に元のファイル名）
       const qiitaPath = path.join(qiitaDir, article.filename);
       fs.writeFileSync(qiitaPath, qiitaArticle.fullContent);
       qiitaCount++;
