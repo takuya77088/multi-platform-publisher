@@ -158,4 +158,5 @@ qiita/
 
 # 公開済み記事メタデータ（機密情報を含むプラットフォームID）
 config/published-articles.json
+config/published-articles.json.backup
 

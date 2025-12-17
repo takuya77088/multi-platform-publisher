@@ -12,6 +12,8 @@
     "preview:all": "concurrently \"npm run preview:zenn\" \"npm run preview:qiita\"",
     "convert:qiita": "node -e \"const {getPublishedArticles, convertToQiita} = require('./scripts/convert-articles'); console.log('Qiita変換のみ実行...');\"",
     "convert:devto": "node -e \"const {getPublishedArticles, convertToDevTo} = require('./scripts/convert-articles'); console.log('Dev.to変換のみ実行...');\"",
+    "sync": "node scripts/sync-published-articles.js",
+    "install:hook": "bash scripts/install-post-push-hook.sh",
     "validate": "node -e \"console.log('記事構造検証...');\""
   },
   "keywords": [
