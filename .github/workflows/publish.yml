@@ -28,6 +28,34 @@ jobs:
         npm install
         npm install -g zenn-cli
         npm install axios gray-matter js-yaml
+    
+    - name: Restore published-articles.json from cache
+      id: cache-published-articles
+      uses: actions/cache@v3
+      with:
+        path: config/published-articles.json
+        key: published-articles-${{ github.repository }}-main
+        restore-keys: |
+          published-articles-${{ github.repository }}-
+    
+    - name: Initialize published-articles.json if not exists
+      run: |
+        mkdir -p config
+        if [ ! -f config/published-articles.json ]; then
+          echo "⚠️  published-articles.json がキャッシュに見つかりません"
+          # Git履歴から復元を試行（移行期間中）
+          if git show HEAD:config/published-articles.json > /dev/null 2>&1; then
+            echo "📥 Git履歴から復元中..."
+            git show HEAD:config/published-articles.json > config/published-articles.json
+            echo "✅ Git履歴から復元完了"
+          else
+            echo "📝 空ファイルを作成（初回実行）"
+            echo "{}" > config/published-articles.json
+          fi
+        else
+          echo "✅ published-articles.json をキャッシュから復元しました"
+          echo "📋 キャッシュヒット: ${{ steps.cache-published-articles.outputs.cache-hit }}"
+        fi
         
     - name: Convert articles
       run: |
@@ -43,17 +71,23 @@ jobs:
         echo "Publishing articles..."
         node scripts/publish-articles.js
         
-    - name: Commit converted articles
+    - name: Save published-articles.json to cache
+      if: always()
       run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git pull --no-rebase
-        git add config/published-articles.json
-        
-        # 変更がある場合のみコミット
-        if ! git diff --staged --quiet; then
-          git commit -m "Auto-converted articles [skip ci]"
-          git push
+        # Cache action は自動的に保存しますが、新しい key を使用して強制的に更新する必要があります
+        # run_number を使用して、毎回実行時に新しいキャッシュを作成します
+        echo "💾 published-articles.json をキャッシュに保存中..."
+        if [ -f config/published-articles.json ]; then
+          echo "✅ ファイルが存在し、自動的にキャッシュされます"
         else
-          echo "No changes to commit"
+          echo "⚠️  ファイルが見つかりません。キャッシュに保存できません"
         fi
+    
+    - name: Update cache with published-articles.json
+      if: always()
+      uses: actions/cache@v3
+      with:
+        path: config/published-articles.json
+        key: published-articles-${{ github.repository }}-main-${{ github.sha }}
+        restore-keys: |
+          published-articles-${{ github.repository }}-main-

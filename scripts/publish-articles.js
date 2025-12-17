@@ -126,6 +126,40 @@ async function publishToDevTo(article) {
 }
 
 // ------------------------------------------------------------
+// Slug生成ユーティリティ
+// ------------------------------------------------------------
+function generateSlug(filename) {
+  // ファイル名から拡張子を除去
+  let slug = filename.replace(/\.md$/, '');
+  
+  // 日付プレフィックス（YYYYMMDD-）を除去（オプション）
+  // 例: 20251113-what-is-apidog-mcp-server -> what-is-apidog-mcp-server
+  slug = slug.replace(/^\d{8}-/, '');
+  
+  // 既に適切な形式（小文字、ハイフン区切り）の場合はそのまま返す
+  // そうでない場合は、より適切な形式に変換
+  // Dev.to の slug は小文字、ハイフン区切り、最大250文字
+  slug = slug.toLowerCase();
+  
+  // 特殊文字をハイフンに変換
+  slug = slug.replace(/[^a-z0-9-]/g, '-');
+  
+  // 連続するハイフンを1つに
+  slug = slug.replace(/-+/g, '-');
+  
+  // 先頭と末尾のハイフンを削除
+  slug = slug.replace(/^-+|-+$/g, '');
+  
+  // 最大長を制限（Dev.to の制限に合わせて）
+  if (slug.length > 250) {
+    slug = slug.substring(0, 250);
+    slug = slug.replace(/-+$/, ''); // 末尾のハイフンを削除
+  }
+  
+  return slug;
+}
+
+// ------------------------------------------------------------
 // Markdown 記事の読み込み
 // ------------------------------------------------------------
 function loadMarkdownFiles() {
@@ -143,6 +177,7 @@ function loadMarkdownFiles() {
       frontmatter: data,
       content,
       isDraft: data?.draft === true,
+      slug: generateSlug(file), // カスタムslugを追加
     };
   });
 }
@@ -238,6 +273,9 @@ async function main() {
           : [devtoParsed.data.tags];
       }
       
+      // カスタムslugを生成（ファイル名ベース、Zennのファイル名と一致）
+      const customSlug = generateSlug(article.file);
+      
       const payload = {
         article: {
           title: devtoParsed.data.title,
@@ -245,9 +283,11 @@ async function main() {
           published: devtoParsed.data.published !== false, // Default true unless false
           tags: devtoTags, // Convert済みファイルは単純な配列または文字列(matterの解析次第)
           // YAML dumpで `tags: [a, b]` と書いた場合、此处は配列になる
+          slug: customSlug, // カスタムslugを追加（Dev.to APIがサポートする場合）
         }
       };
 
+      console.log(`  📌 カスタムslug: ${customSlug}`);
       devtoRes = await publishToDevToWithPayload(key, payload);
     } else if (!shouldPublishToDevTo) {
       console.log(`  ⏭️  Dev.toへの投稿が無効化されています（platforms.devto: false）`);
