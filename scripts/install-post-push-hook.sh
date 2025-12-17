@@ -31,6 +31,15 @@ EOF
 # 実行権限を付与
 chmod +x "$HOOK_FILE"
 
+# post-push-sync.sh にも実行権限を付与（重要！）
+SYNC_SCRIPT="$REPO_ROOT/scripts/post-push-sync.sh"
+if [ -f "$SYNC_SCRIPT" ]; then
+  chmod +x "$SYNC_SCRIPT"
+  echo "✅ 同期スクリプトに実行権限を付与しました"
+else
+  echo "⚠️  同期スクリプトが見つかりません: $SYNC_SCRIPT"
+fi
+
 echo "✅ Git post-push hook をインストールしました"
 echo ""
 echo "📝 使用方法:"
@@ -38,4 +47,3 @@ echo "   git push を実行すると、自動的に npm run sync が実行され
 echo ""
 echo "💡 無効化する場合:"
 echo "   rm .git/hooks/post-push"
-
