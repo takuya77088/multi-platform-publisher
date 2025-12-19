@@ -2,6 +2,7 @@
 // 多プラットフォーム向け記事公開スクリプト（Qiita / Dev.to / Zenn GitHub同期）
 // 公開・更新処理、フロントマターの解析などを担当
 
+require("dotenv").config();
 const fs = require("fs");
 const path = require("path");
 const axios = require("axios");
@@ -214,46 +215,73 @@ async function main() {
       console.log(`  ⏭️  Qiita用変換済みファイルが見つからないためスキップ（変更なしか、変換対象外）`);
     }
 
-    // --- Dev.to 処理 ---
+    // --- Dev.to 処理（英語版優先ロジック） ---
     let devtoRes = null;
-    const devtoConvertedPath = path.join(process.cwd(), "dev-to", `${key}.md`);
+    
+    const devtoAutoPath = path.join(process.cwd(), "dev-to", `${key}.md`); // 自動変換された日本語版
+    const devtoEnPath = path.join(process.cwd(), "dev-to", `${key}-en.md`); // 手動作成された英語版
 
     // プラットフォーム設定をチェック
     const shouldPublishToDevTo = !frontmatter.platforms || frontmatter.platforms.devto !== false;
 
-    if (fs.existsSync(devtoConvertedPath) && shouldPublishToDevTo) {
-      console.log(`  🔍 Dev.to用変換済みファイルを検出: ${devtoConvertedPath}`);
-
-      // 重要: convert-articles.js で生成されたファイルを読み込む
-      // そこには既に制限されたタグや整形されたFrontmatterが含まれている
-      const devtoContent = fs.readFileSync(devtoConvertedPath, "utf8");
-      const devtoParsed = matter(devtoContent);
-
-      // Dev.to用のpayload作成
-      // tagsの処理: 配列の場合はそのまま、文字列の場合は配列に変換
-      let devtoTags = [];
-      if (devtoParsed.data.tags) {
-        devtoTags = Array.isArray(devtoParsed.data.tags) 
-          ? devtoParsed.data.tags 
-          : [devtoParsed.data.tags];
-      }
-      
-      const payload = {
-        article: {
-          title: devtoParsed.data.title,
-          body_markdown: devtoParsed.content,
-          published: devtoParsed.data.published !== false, // Default true unless false
-          tags: devtoTags, // Convert済みファイルは単純な配列または文字列(matterの解析次第)
-          // YAML dumpで `tags: [a, b]` と書いた場合、此处は配列になる
-          // 注意: Dev.to APIはカスタムslugをサポートしていません（タイトルから自動生成されます）
-        }
-      };
-
-      devtoRes = await publishToDevToWithPayload(key, payload);
-    } else if (!shouldPublishToDevTo) {
+    if (!shouldPublishToDevTo) {
       console.log(`  ⏭️  Dev.toへの投稿が無効化されています（platforms.devto: false）`);
     } else {
-      console.log(`  ⏭️  Dev.to用変換済みファイルが見つからないためスキップ（変更なしか、変換対象外）`);
+      // 優先順位: 英語版ファイル（${key}-en.md）が存在する場合は英語版を投稿
+      // 存在しない場合は日本語版を投稿
+      if (fs.existsSync(devtoEnPath)) {
+        // 英語版を投稿
+        console.log(`  🔍 Dev.to英語版（手動作成）を検出: ${devtoEnPath}`);
+        
+        const devtoEnContent = fs.readFileSync(devtoEnPath, "utf8");
+        const devtoEnParsed = matter(devtoEnContent);
+        
+        let devtoEnTags = [];
+        if (devtoEnParsed.data.tags) {
+          devtoEnTags = Array.isArray(devtoEnParsed.data.tags) 
+            ? devtoEnParsed.data.tags 
+            : [devtoEnParsed.data.tags];
+        }
+        
+        const payloadEn = {
+          article: {
+            title: devtoEnParsed.data.title,
+            body_markdown: devtoEnParsed.content,
+            published: devtoEnParsed.data.published !== false,
+            tags: devtoEnTags,
+          }
+        };
+
+        // 英語版として投稿（devto_id を使用、既存の日本語版IDがあれば更新）
+        devtoRes = await publishToDevToWithPayload(key, payloadEn, "en");
+      } else if (fs.existsSync(devtoAutoPath)) {
+        // 日本語版を投稿（自動変換されたファイル）
+        console.log(`  🔍 Dev.to日本語版（自動変換）を検出: ${devtoAutoPath}`);
+        
+        const devtoContent = fs.readFileSync(devtoAutoPath, "utf8");
+        const devtoParsed = matter(devtoContent);
+        
+        let devtoTags = [];
+        if (devtoParsed.data.tags) {
+          devtoTags = Array.isArray(devtoParsed.data.tags) 
+            ? devtoParsed.data.tags 
+            : [devtoParsed.data.tags];
+        }
+        
+        const payload = {
+          article: {
+            title: devtoParsed.data.title,
+            body_markdown: devtoParsed.content,
+            published: devtoParsed.data.published !== false,
+            tags: devtoTags,
+          }
+        };
+
+        // 日本語版として投稿
+        devtoRes = await publishToDevToWithPayload(key, payload, "ja");
+      } else {
+        console.log(`  ⏭️  Dev.to用ファイルが見つからないためスキップ（変更なしか、変換対象外）`);
+      }
     }
 
     // --- メタデータ更新 (安全なマージ) ---
@@ -270,7 +298,10 @@ async function main() {
       if (devtoRes) {
         publishedMeta[key].devto_id = devtoRes.id;
         publishedMeta[key].devto_url = devtoRes.url;
-        console.log(`  ✅ Dev.toメタデータ更新: ID=${devtoRes.id}`);
+        // 英語版か日本語版かをログに表示
+        const isEnglish = fs.existsSync(path.join(process.cwd(), "dev-to", `${key}-en.md`));
+        const langLabel = isEnglish ? "英語版" : "日本語版";
+        console.log(`  ✅ Dev.to${langLabel}メタデータ更新: ID=${devtoRes.id}`);
       }
 
       // 各記事処理後に即座に保存（エラー時のデータ損失を防ぐ）
@@ -289,31 +320,36 @@ async function main() {
 }
 
 // Helper: Refactored Dev.to publish that takes payload directly
-async function publishToDevToWithPayload(key, payload) {
+// language: "ja" (日本語) または "en" (英語)
+// 注意: Dev.toは1記事につき1バージョンのみ（日本語または英語）
+async function publishToDevToWithPayload(key, payload, language = "ja") {
   const devKey = process.env.DEV_TO_API_KEY;
   if (!devKey) {
     console.log("  ⏭️  DEV_TO_API_KEY 未設定");
     return null;
   }
 
+  // Dev.toは1記事につき1バージョンのみなので、常にdevto_idを使用
   const existingId = publishedMeta[key]?.devto_id;
+  
   const headers = { "api-key": devKey, "Content-Type": "application/json" };
+  const langLabel = language === "en" ? "英語" : "日本語";
 
   try {
     if (existingId) {
-      console.log(`  🔄 Dev.to: 更新リクエスト送信... (ID: ${existingId})`);
+      console.log(`  🔄 Dev.to${langLabel}版: 更新リクエスト送信... (ID: ${existingId})`);
       const res = await axios.put(`https://dev.to/api/articles/${existingId}`, payload, { headers });
-      console.log(`    ✅ Dev.to 更新成功: ${res.data.url}`);
+      console.log(`    ✅ Dev.to${langLabel}版 更新成功: ${res.data.url}`);
       return { id: res.data.id, url: res.data.url, isNew: false };
     } else {
-      console.log(`  📝 Dev.to: 新規作成リクエスト送信...`);
+      console.log(`  📝 Dev.to${langLabel}版: 新規作成リクエスト送信...`);
       const res = await axios.post("https://dev.to/api/articles", payload, { headers });
-      console.log(`    ✅ Dev.to 作成成功: ${res.data.url}`);
+      console.log(`    ✅ Dev.to${langLabel}版 作成成功: ${res.data.url}`);
       return { id: res.data.id, url: res.data.url, isNew: true };
     }
   } catch (error) {
     const msg = error.response?.data?.error || error.message;
-    console.error(`  ❌ Dev.to エラー: ${msg}`);
+    console.error(`  ❌ Dev.to${langLabel}版 エラー: ${msg}`);
     return null;
   }
 }

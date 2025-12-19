@@ -153,7 +153,9 @@ temp/
 .env.local
 
 # Auto-generated platform folders (not committed)
-dev-to/
+# dev-to ディレクトリ内のすべての .md ファイルを無視しますが、手動作成された英語版ファイル（*-en.md）は許可します
+dev-to/*.md
+!dev-to/*-en.md  # 手動で作成した英語版ファイルの提出は可能です。
 qiita/
 
 # 公開済み記事メタデータ（機密情報を含むプラットフォームID）
