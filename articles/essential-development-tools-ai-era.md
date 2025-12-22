@@ -1,7 +1,7 @@
 ---
 title: "現役エンジニアが選ぶ2025年必須開発ツール(IDEからAIまで)"
 emoji: "🐣"
-type: "tech"
+type: "idea"
 topics: ["開発ツール","AI開発","IDE比較","ツールスタック","開発効率化"]
 published: true  # Zenn公開設定（まず false で下書き）
 
