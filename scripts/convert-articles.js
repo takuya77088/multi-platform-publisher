@@ -176,8 +176,24 @@ function convertToDevTo(article) {
     return null;
   }
 
-  // Dev.to最多4个tags
-  const devtoTags = frontmatter.topics ? frontmatter.topics.slice(0, 4) : [];
+  // Dev.toタグは最大4個まで
+  const rawTags = frontmatter.topics || [];
+
+  // Dev.to tag変換ロジック：英語tagは全て小文字かつ空白なし、他の言語はそのまま
+  const normalizeDevToTag = (tag) => {
+    // 英語文字を含むか判定
+    const hasEnglish = /[a-zA-Z]/.test(tag);
+
+    if (hasEnglish) {
+      // 英語tag：小文字変換 + 空白削除
+      return tag.toLowerCase().replace(/\s+/g, '');
+    } else {
+      // 他の言語（日本語など）：そのまま
+      return tag;
+    }
+  };
+
+  const devtoTags = rawTags.slice(0, 4).map(normalizeDevToTag);
   
   // フロントマター構築
   const devtoFrontmatter = {
@@ -270,26 +286,13 @@ function main() {
       console.log(`  ⏭️  Qiita変換スキップ（プラットフォーム指定）`);
     }
     
-    // Dev.to変換
-    const devtoArticle = convertToDevTo(article);
-    if (devtoArticle) {
-      const devtoDir = path.join(process.cwd(), 'dev-to');
-      if (!fs.existsSync(devtoDir)) {
-        fs.mkdirSync(devtoDir, { recursive: true });
-      }
-      
-      const devtoPath = path.join(devtoDir, article.filename);
-      fs.writeFileSync(devtoPath, devtoArticle.fullContent);
-      devtoCount++;
-      console.log(`  ✅ Dev.to版作成: ${devtoPath}`);
-    } else {
-      console.log(`  ⏭️  Dev.to変換スキップ（プラットフォーム指定）`);
-    }
+    // Dev.to変換（スキップ - dev-to/ディレクトリには手動で作成した英語版のみを保持）
+    // console.log(`  ⏭️  Dev.to変換スキップ（英語版は手動作成）`);
   });
   
   console.log(`\n🎉 変換完了!`);
   console.log(`  📊 Qiita: ${qiitaCount}件`);
-  console.log(`  📊 Dev.to: ${devtoCount}件`);
+  console.log(`  📝 注意: Dev.to日本語版は公開時に自動変換されます`);
 }
 
 if (require.main === module) {

@@ -7,6 +7,7 @@ const fs = require("fs");
 const path = require("path");
 const axios = require("axios");
 const matter = require("gray-matter");
+const { convertToDevTo } = require("./convert-articles.js");
 
 // ------------------------------------------------------------
 // 定数定義
@@ -218,7 +219,6 @@ async function main() {
     // --- Dev.to 処理（英語版優先ロジック） ---
     let devtoRes = null;
     
-    const devtoAutoPath = path.join(process.cwd(), "dev-to", `${key}.md`); // 自動変換された日本語版
     const devtoEnPath = path.join(process.cwd(), "dev-to", `${key}-en.md`); // 手動作成された英語版
 
     // プラットフォーム設定をチェック
@@ -227,11 +227,9 @@ async function main() {
     if (!shouldPublishToDevTo) {
       console.log(`  ⏭️  Dev.toへの投稿が無効化されています（platforms.devto: false）`);
     } else {
-      // 優先順位: 英語版ファイル（${key}-en.md）が存在する場合は英語版を投稿
-      // 存在しない場合は日本語版を投稿
       if (fs.existsSync(devtoEnPath)) {
-        // 英語版を投稿
-        console.log(`  🔍 Dev.to英語版（手動作成）を検出: ${devtoEnPath}`);
+        // 英語版を投稿（手動作成されたファイル）
+        console.log(`  🌐 Dev.to英語版（手動作成）を検出: ${devtoEnPath}`);
         
         const devtoEnContent = fs.readFileSync(devtoEnPath, "utf8");
         const devtoEnParsed = matter(devtoEnContent);
@@ -252,35 +250,27 @@ async function main() {
           }
         };
 
-        // 英語版として投稿（devto_id を使用、既存の日本語版IDがあれば更新）
         devtoRes = await publishToDevToWithPayload(key, payloadEn, "en");
-      } else if (fs.existsSync(devtoAutoPath)) {
-        // 日本語版を投稿（自動変換されたファイル）
-        console.log(`  🔍 Dev.to日本語版（自動変換）を検出: ${devtoAutoPath}`);
-        
-        const devtoContent = fs.readFileSync(devtoAutoPath, "utf8");
-        const devtoParsed = matter(devtoContent);
-        
-        let devtoTags = [];
-        if (devtoParsed.data.tags) {
-          devtoTags = Array.isArray(devtoParsed.data.tags) 
-            ? devtoParsed.data.tags 
-            : [devtoParsed.data.tags];
-        }
-        
-        const payload = {
-          article: {
-            title: devtoParsed.data.title,
-            body_markdown: devtoParsed.content,
-            published: devtoParsed.data.published !== false,
-            tags: devtoTags,
-          }
-        };
-
-        // 日本語版として投稿
-        devtoRes = await publishToDevToWithPayload(key, payload, "ja");
       } else {
-        console.log(`  ⏭️  Dev.to用ファイルが見つからないためスキップ（変更なしか、変換対象外）`);
+        // 日本語版を投稿（articles/から自動変換）
+        console.log(`  📝 Dev.to日本語版を投稿（articles/から自動変換）`);
+        
+        // articles/から読み込んで変換
+        const devtoArticle = convertToDevTo(article);
+        if (devtoArticle) {
+          const payload = {
+            article: {
+              title: devtoArticle.frontmatter.title,
+              body_markdown: devtoArticle.content,
+              published: devtoArticle.frontmatter.published !== false,
+              tags: devtoArticle.frontmatter.tags || [],
+            }
+          };
+          
+          devtoRes = await publishToDevToWithPayload(key, payload, "ja");
+        } else {
+          console.log(`  ⏭️  Dev.to変換スキップ（プラットフォーム指定）`);
+        }
       }
     }
 
