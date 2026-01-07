@@ -290,17 +290,17 @@ async function main() {
       }
     }
 
-    // --- メタデータ更新 (新構造: ネストされたプラットフォーム/言語情報) ---
+    // --- メタデータ更新 (新構造: ネストされたプラットフォーム/言語情報、動的生成) ---
     if (qiitaRes || devtoRes) {
       if (!publishedMeta[key]) {
-        publishedMeta[key] = {
-          qiita: { id: null, url: null },
-          devto: { ja: { id: null, url: null }, en: { id: null, url: null } }
-        };
+        publishedMeta[key] = {};
       }
 
       // Qiitaの場合
       if (qiitaRes) {
+        if (!publishedMeta[key].qiita) {
+          publishedMeta[key].qiita = { id: null, url: null };
+        }
         publishedMeta[key].qiita.id = qiitaRes.id;
         publishedMeta[key].qiita.url = qiitaRes.url;
         console.log(`  ✅ Qiitaメタデータ更新: ID=${qiitaRes.id}`);
@@ -310,6 +310,14 @@ async function main() {
       if (devtoRes) {
         const lang = devtoKey.endsWith('-en') ? 'en' : 'ja';
         const langLabel = lang === 'en' ? "英語版" : "日本語版";
+
+        if (!publishedMeta[key].devto) {
+          publishedMeta[key].devto = {};
+        }
+        if (!publishedMeta[key].devto[lang]) {
+          publishedMeta[key].devto[lang] = { id: null, url: null };
+        }
+
         publishedMeta[key].devto[lang].id = devtoRes.id;
         publishedMeta[key].devto[lang].url = devtoRes.url;
         console.log(`  ✅ Dev.to${langLabel}メタデータ更新: ID=${devtoRes.id}`);

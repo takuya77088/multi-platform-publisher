@@ -179,12 +179,14 @@ async function main() {
     const key = guessArticleKey(article.title, localArticles);
     if (key) {
       if (!publishedMeta[key]) {
-        publishedMeta[key] = {
-          qiita: { id: null, url: null },
-          devto: { ja: { id: null, url: null }, en: { id: null, url: null } }
-        };
+        publishedMeta[key] = {};
         newCount++;
       }
+
+      if (!publishedMeta[key].qiita) {
+        publishedMeta[key].qiita = { id: null, url: null };
+      }
+
       if (!publishedMeta[key].qiita.id || publishedMeta[key].qiita.id !== article.id) {
         publishedMeta[key].qiita.id = article.id;
         publishedMeta[key].qiita.url = article.url;
@@ -236,12 +238,17 @@ async function main() {
 
     if (key) {
       if (!publishedMeta[key]) {
-        publishedMeta[key] = {
-          qiita: { id: null, url: null },
-          devto: { ja: { id: null, url: null }, en: { id: null, url: null } }
-        };
+        publishedMeta[key] = {};
         newCount++;
       }
+
+      if (!publishedMeta[key].devto) {
+        publishedMeta[key].devto = {};
+      }
+      if (!publishedMeta[key].devto[lang]) {
+        publishedMeta[key].devto[lang] = { id: null, url: null };
+      }
+
       if (!publishedMeta[key].devto[lang].id || publishedMeta[key].devto[lang].id !== article.id) {
         publishedMeta[key].devto[lang].id = article.id;
         publishedMeta[key].devto[lang].url = article.url;
