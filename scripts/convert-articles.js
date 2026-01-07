@@ -179,14 +179,16 @@ function convertToDevTo(article) {
   // Dev.toタグは最大4個まで
   const rawTags = frontmatter.topics || [];
 
-  // Dev.to tag変換ロジック：英語tagは全て小文字かつ空白なし、他の言語はそのまま
+  // Dev.to tag変換ロジック：英語tagは全て小文字かつ英数字のみ、他の言語はそのまま
   const normalizeDevToTag = (tag) => {
     // 英語文字を含むか判定
     const hasEnglish = /[a-zA-Z]/.test(tag);
 
     if (hasEnglish) {
-      // 英語tag：小文字変換 + 空白削除
-      return tag.toLowerCase().replace(/\s+/g, '');
+      // 英語tag：小文字変換 + 英数字のみ（スペース、ハイフンなど全て削除）
+      return tag.toLowerCase()
+        .replace(/[^a-zA-Z0-9]/g, "")
+        .substring(0, 30);
     } else {
       // 他の言語（日本語など）：そのまま
       return tag;

@@ -5,6 +5,7 @@
 const fs = require("fs");
 const path = require("path");
 const axios = require("axios");
+const matter = require("gray-matter");
 require("dotenv").config();
 
 const META_FILE = "config/published-articles.json";
@@ -178,12 +179,15 @@ async function main() {
     const key = guessArticleKey(article.title, localArticles);
     if (key) {
       if (!publishedMeta[key]) {
-        publishedMeta[key] = {};
+        publishedMeta[key] = {
+          qiita: { id: null, url: null },
+          devto: { ja: { id: null, url: null }, en: { id: null, url: null } }
+        };
         newCount++;
       }
-      if (!publishedMeta[key].qiita_id || publishedMeta[key].qiita_id !== article.id) {
-        publishedMeta[key].qiita_id = article.id;
-        publishedMeta[key].qiita_url = article.url;
+      if (!publishedMeta[key].qiita.id || publishedMeta[key].qiita.id !== article.id) {
+        publishedMeta[key].qiita.id = article.id;
+        publishedMeta[key].qiita.url = article.url;
         updatedCount++;
         console.log(`  ✅ Qiita: ${key} -> ${article.id}`);
       }
@@ -194,17 +198,56 @@ async function main() {
 
   // Dev.to 記事を処理
   for (const article of devtoArticles) {
-    const key = guessArticleKey(article.title, localArticles);
+    let key = null;
+    let lang = 'ja'; // デフォルトは日本語
+
+    // 優先: dev-toディレクトリの英語版ファイルをチェック
+    const devtoDir = path.join(process.cwd(), "dev-to");
+    if (fs.existsSync(devtoDir)) {
+      const devtoFiles = fs.readdirSync(devtoDir).filter((f) => f.endsWith("-en.md"));
+
+      for (const devtoFile of devtoFiles) {
+        const devtoFilePath = path.join(devtoDir, devtoFile);
+        const devtoContent = fs.readFileSync(devtoFilePath, "utf8");
+        const parsed = matter(devtoContent);
+
+        // ファイル内のタイトルとDev.toのタイトルを比較
+        const normalize = (str) => str
+          .toLowerCase()
+          .replace(/[^\w\s-]/g, "")
+          .replace(/\s+/g, "-")
+          .replace(/-+/g, "-");
+        const normalizedFileTitle = normalize(parsed.data.title || "");
+        const normalizedDevTitle = normalize(article.title);
+
+        if (normalizedFileTitle === normalizedDevTitle) {
+          key = devtoFile.replace("-en.md", "");
+          lang = 'en';
+          break;
+        }
+      }
+    }
+
+    // 英語版が見つからない場合、日本語版をチェック
+    if (!key) {
+      key = guessArticleKey(article.title, localArticles);
+      lang = 'ja';
+    }
+
     if (key) {
       if (!publishedMeta[key]) {
-        publishedMeta[key] = {};
+        publishedMeta[key] = {
+          qiita: { id: null, url: null },
+          devto: { ja: { id: null, url: null }, en: { id: null, url: null } }
+        };
         newCount++;
       }
-      if (!publishedMeta[key].devto_id || publishedMeta[key].devto_id !== article.id) {
-        publishedMeta[key].devto_id = article.id;
-        publishedMeta[key].devto_url = article.url;
+      if (!publishedMeta[key].devto[lang].id || publishedMeta[key].devto[lang].id !== article.id) {
+        publishedMeta[key].devto[lang].id = article.id;
+        publishedMeta[key].devto[lang].url = article.url;
+        const langLabel = lang === 'en' ? '英語版' : '日本語版';
         updatedCount++;
-        console.log(`  ✅ Dev.to: ${key} -> ${article.id}`);
+        console.log(`  ✅ Dev.to${langLabel}: ${key} -> ${article.id}`);
       }
     } else {
       console.log(`  ⚠️  Dev.to記事のマッチングに失敗: "${article.title}"`);

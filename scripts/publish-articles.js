@@ -218,7 +218,8 @@ async function main() {
 
     // --- Dev.to 処理（英語版優先ロジック） ---
     let devtoRes = null;
-    
+    let devtoKey = key; // Dev.to用のキー（英語版の場合は変更）
+
     const devtoEnPath = path.join(process.cwd(), "dev-to", `${key}-en.md`); // 手動作成された英語版
 
     // プラットフォーム設定をチェック
@@ -230,17 +231,30 @@ async function main() {
       if (fs.existsSync(devtoEnPath)) {
         // 英語版を投稿（手動作成されたファイル）
         console.log(`  🌐 Dev.to英語版（手動作成）を検出: ${devtoEnPath}`);
-        
+
         const devtoEnContent = fs.readFileSync(devtoEnPath, "utf8");
         const devtoEnParsed = matter(devtoEnContent);
-        
+
         let devtoEnTags = [];
         if (devtoEnParsed.data.tags) {
-          devtoEnTags = Array.isArray(devtoEnParsed.data.tags) 
-            ? devtoEnParsed.data.tags 
+          devtoEnTags = Array.isArray(devtoEnParsed.data.tags)
+            ? devtoEnParsed.data.tags
             : [devtoEnParsed.data.tags];
         }
-        
+
+        // Dev.to tag normalization: 英語tagは英数字のみ
+        const normalizeDevToTag = (tag) => {
+          const hasEnglish = /[a-zA-Z]/.test(tag);
+          if (hasEnglish) {
+            return tag.toLowerCase()
+              .replace(/[^a-zA-Z0-9]/g, "")
+              .substring(0, 30);
+          } else {
+            return tag;
+          }
+        };
+        devtoEnTags = devtoEnTags.slice(0, 4).map(normalizeDevToTag);
+
         const payloadEn = {
           article: {
             title: devtoEnParsed.data.title,
@@ -250,7 +264,9 @@ async function main() {
           }
         };
 
-        devtoRes = await publishToDevToWithPayload(key, payloadEn, "en");
+        // 英語版用の独立キーを使用
+        devtoKey = `${key}-en`;
+        devtoRes = await publishToDevToWithPayload(devtoKey, payloadEn, "en");
       } else {
         // 日本語版を投稿（articles/から自動変換）
         console.log(`  📝 Dev.to日本語版を投稿（articles/から自動変換）`);
@@ -274,23 +290,28 @@ async function main() {
       }
     }
 
-    // --- メタデータ更新 (安全なマージ) ---
-    // 成功した場合のみIDを更新し、既存のデータは保持する
+    // --- メタデータ更新 (新構造: ネストされたプラットフォーム/言語情報) ---
     if (qiitaRes || devtoRes) {
-      if (!publishedMeta[key]) publishedMeta[key] = {};
+      if (!publishedMeta[key]) {
+        publishedMeta[key] = {
+          qiita: { id: null, url: null },
+          devto: { ja: { id: null, url: null }, en: { id: null, url: null } }
+        };
+      }
 
+      // Qiitaの場合
       if (qiitaRes) {
-        publishedMeta[key].qiita_id = qiitaRes.id;
-        publishedMeta[key].qiita_url = qiitaRes.url;
+        publishedMeta[key].qiita.id = qiitaRes.id;
+        publishedMeta[key].qiita.url = qiitaRes.url;
         console.log(`  ✅ Qiitaメタデータ更新: ID=${qiitaRes.id}`);
       }
 
+      // Dev.toの場合
       if (devtoRes) {
-        publishedMeta[key].devto_id = devtoRes.id;
-        publishedMeta[key].devto_url = devtoRes.url;
-        // 英語版か日本語版かをログに表示
-        const isEnglish = fs.existsSync(path.join(process.cwd(), "dev-to", `${key}-en.md`));
-        const langLabel = isEnglish ? "英語版" : "日本語版";
+        const lang = devtoKey.endsWith('-en') ? 'en' : 'ja';
+        const langLabel = lang === 'en' ? "英語版" : "日本語版";
+        publishedMeta[key].devto[lang].id = devtoRes.id;
+        publishedMeta[key].devto[lang].url = devtoRes.url;
         console.log(`  ✅ Dev.to${langLabel}メタデータ更新: ID=${devtoRes.id}`);
       }
 

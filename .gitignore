@@ -152,13 +152,11 @@ config/local.json
 temp/
 .env.local
 
-# Auto-generated platform folders (not committed)
-# dev-to ディレクトリ内のすべての .md ファイルを無視しますが、手動作成された英語版ファイル（*-en.md）は許可します
-dev-to/*.md
-!dev-to/*-en.md  # 手動で作成した英語版ファイルの提出は可能です。
-qiita/
+ # Auto-generated platform folders (not committed)
+ # dev-to ディレクトリ内のすべての .md ファイルを無視します（日语版和英语版都是本地的）
+ dev-to/*.md
+ qiita/
 
-# 公開済み記事メタデータ（機密情報を含むプラットフォームID）
-config/published-articles.json
-config/published-articles.json.backup
+ # 公開済み記事メタデータバックアップ
+ config/published-articles.json.backup
 
