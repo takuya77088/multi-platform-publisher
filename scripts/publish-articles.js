@@ -7,7 +7,7 @@ const fs = require("fs");
 const path = require("path");
 const axios = require("axios");
 const matter = require("gray-matter");
-const { convertToDevTo } = require("./convert-articles.js");
+const { convertToDevTo, normalizeDevToTag } = require("./convert-articles.js");
 
 // ------------------------------------------------------------
 // 定数定義
@@ -75,56 +75,11 @@ async function publishToQiita(articleKey, title, body, tags) {
 }
 
 // ------------------------------------------------------------
-// Dev.to への記事公開処理
+// Dev.to への記事公開処理（非推奨、publishToDevToWithPayloadを使用してください）
 // ------------------------------------------------------------
 async function publishToDevTo(article) {
-  const devKey = process.env.DEV_TO_API_KEY;
-
-  if (!devKey || devKey.trim() === "") {
-    console.log("⏭️ DEV_TO_API_KEY が未設定のため、Dev.to への投稿をスキップします");
-    return null;
-  }
-
-  const devtoPath = path.join(process.cwd(), "dev-to", `${article.key}.md`);
-  if (!fs.existsSync(devtoPath)) {
-    console.log(`⏭️ Dev.to 用 Markdown ファイルが存在しません: ${devtoPath}`);
-    return null;
-  }
-
-  const mdContent = fs.readFileSync(devtoPath, "utf8");
-  const parsed = matter(mdContent);
-
-  const existingId = publishedMeta[article.key]?.devto_id;
-
-  const payload = {
-    article: {
-      title: parsed.data.title,
-      body_markdown: parsed.content,
-      published: parsed.data.published || true,
-      tags: parsed.data.tags ? (Array.isArray(parsed.data.tags) ? parsed.data.tags : [parsed.data.tags]) : [],
-    },
-  };
-
-  try {
-    if (existingId) {
-      console.log(`🔄 Dev.to: 既存記事を更新中 → ${article.key}`);
-      const res = await axios.put(`https://dev.to/api/articles/${existingId}`, payload, {
-        headers: { "api-key": devKey, "Content-Type": "application/json" },
-      });
-      console.log(`✅ Dev.to 更新成功: ${res.data.url}`);
-      return { id: res.data.id, url: res.data.url, isNew: false };
-    } else {
-      console.log(`📝 Dev.to: 新規記事を作成中 → ${article.key}`);
-      const res = await axios.post("https://dev.to/api/articles", payload, {
-        headers: { "api-key": devKey, "Content-Type": "application/json" },
-      });
-      console.log(`✅ Dev.to 投稿成功: ${res.data.url}`);
-      return { id: res.data.id, url: res.data.url, isNew: true };
-    }
-  } catch (error) {
-    console.error(`❌ Dev.to への投稿処理に失敗しました (${article.key})`, error.response?.data || error.message);
-    return null;
-  }
+  console.warn(`⚠️  publishToDevToは非推奨です。publishToDevToWithPayloadを使用してください。`);
+  return null;
 }
 
 // ------------------------------------------------------------
@@ -218,7 +173,6 @@ async function main() {
 
     // --- Dev.to 処理（英語版優先ロジック） ---
     let devtoRes = null;
-    let devtoKey = key; // Dev.to用のキー（英語版の場合は変更）
 
     const devtoEnPath = path.join(process.cwd(), "dev-to", `${key}-en.md`); // 手動作成された英語版
 
@@ -242,17 +196,7 @@ async function main() {
             : [devtoEnParsed.data.tags];
         }
 
-        // Dev.to tag normalization: 英語tagは英数字のみ
-        const normalizeDevToTag = (tag) => {
-          const hasEnglish = /[a-zA-Z]/.test(tag);
-          if (hasEnglish) {
-            return tag.toLowerCase()
-              .replace(/[^a-zA-Z0-9]/g, "")
-              .substring(0, 30);
-          } else {
-            return tag;
-          }
-        };
+        // Dev.to tag正規化（共通関数を使用）
         devtoEnTags = devtoEnTags.slice(0, 4).map(normalizeDevToTag);
 
         const payloadEn = {
@@ -264,9 +208,8 @@ async function main() {
           }
         };
 
-        // 英語版用の独立キーを使用
-        devtoKey = `${key}-en`;
-        devtoRes = await publishToDevToWithPayload(devtoKey, payloadEn, "en");
+        // 元のキーを使用して英語版を投稿
+        devtoRes = await publishToDevToWithPayload(key, payloadEn, "en");
       } else {
         // 日本語版を投稿（articles/から自動変換）
         console.log(`  📝 Dev.to日本語版を投稿（articles/から自動変換）`);
@@ -308,18 +251,22 @@ async function main() {
 
       // Dev.toの場合
       if (devtoRes) {
-        const lang = devtoKey.endsWith('-en') ? 'en' : 'ja';
+        const lang = devtoRes.language;
+        const articleKey = devtoRes.articleKey;
         const langLabel = lang === 'en' ? "英語版" : "日本語版";
 
-        if (!publishedMeta[key].devto) {
-          publishedMeta[key].devto = {};
+        if (!publishedMeta[articleKey]) {
+          publishedMeta[articleKey] = {};
         }
-        if (!publishedMeta[key].devto[lang]) {
-          publishedMeta[key].devto[lang] = { id: null, url: null };
+        if (!publishedMeta[articleKey].devto) {
+          publishedMeta[articleKey].devto = {};
+        }
+        if (!publishedMeta[articleKey].devto[lang]) {
+          publishedMeta[articleKey].devto[lang] = { id: null, url: null };
         }
 
-        publishedMeta[key].devto[lang].id = devtoRes.id;
-        publishedMeta[key].devto[lang].url = devtoRes.url;
+        publishedMeta[articleKey].devto[lang].id = devtoRes.id;
+        publishedMeta[articleKey].devto[lang].url = devtoRes.url;
         console.log(`  ✅ Dev.to${langLabel}メタデータ更新: ID=${devtoRes.id}`);
       }
 
@@ -338,18 +285,19 @@ async function main() {
   console.log("\n🎉 公開処理が完了しました\n");
 }
 
-// Helper: Refactored Dev.to publish that takes payload directly
+// Helper: Dev.to publish with payload
+// articleKey: 原始記事キー（-enなどのサフィックスなし）
 // language: "ja" (日本語) または "en" (英語)
 // 注意: Dev.toは1記事につき1バージョンのみ（日本語または英語）
-async function publishToDevToWithPayload(key, payload, language = "ja") {
+async function publishToDevToWithPayload(articleKey, payload, language = "ja") {
   const devKey = process.env.DEV_TO_API_KEY;
   if (!devKey) {
     console.log("  ⏭️  DEV_TO_API_KEY 未設定");
     return null;
   }
 
-  // Dev.toは1記事につき1バージョンのみなので、常にdevto_idを使用
-  const existingId = publishedMeta[key]?.devto_id;
+  // 正しいデータ構造から既存IDを取得
+  const existingId = publishedMeta[articleKey]?.devto?.[language]?.id;
   
   const headers = { "api-key": devKey, "Content-Type": "application/json" };
   const langLabel = language === "en" ? "英語" : "日本語";
@@ -359,12 +307,12 @@ async function publishToDevToWithPayload(key, payload, language = "ja") {
       console.log(`  🔄 Dev.to${langLabel}版: 更新リクエスト送信... (ID: ${existingId})`);
       const res = await axios.put(`https://dev.to/api/articles/${existingId}`, payload, { headers });
       console.log(`    ✅ Dev.to${langLabel}版 更新成功: ${res.data.url}`);
-      return { id: res.data.id, url: res.data.url, isNew: false };
+      return { id: res.data.id, url: res.data.url, isNew: false, articleKey, language };
     } else {
       console.log(`  📝 Dev.to${langLabel}版: 新規作成リクエスト送信...`);
       const res = await axios.post("https://dev.to/api/articles", payload, { headers });
       console.log(`    ✅ Dev.to${langLabel}版 作成成功: ${res.data.url}`);
-      return { id: res.data.id, url: res.data.url, isNew: true };
+      return { id: res.data.id, url: res.data.url, isNew: true, articleKey, language };
     }
   } catch (error) {
     const msg = error.response?.data?.error || error.message;

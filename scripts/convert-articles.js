@@ -167,6 +167,22 @@ slide: false`;
   };
 }
 
+// Dev.to tag正規化ロジック
+// - 英語tag: 全て小文字 + スペース・記号削除（例: AI Development → aidevelopment, node.js → nodejs）
+// - 混合tag: 英語部分を小文字 + スペース・記号削除（例: AI 開発 → ai開発）
+// - 日本語tag: そのまま（例: 開発 → 開発）
+function normalizeDevToTag(tag) {
+  const hasEnglish = /[a-zA-Z]/.test(tag);
+
+  if (hasEnglish) {
+    let normalized = tag.replace(/[^a-zA-Z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF\uFF66-\uFF9F]/g, '');
+    normalized = normalized.replace(/[a-zA-Z]/g, (match) => match.toLowerCase());
+    return normalized.substring(0, 30);
+  } else {
+    return tag;
+  }
+}
+
 // Dev.to形式に変換
 function convertToDevTo(article) {
   const { frontmatter, content } = article;
@@ -178,23 +194,6 @@ function convertToDevTo(article) {
 
   // Dev.toタグは最大4個まで
   const rawTags = frontmatter.topics || [];
-
-  // Dev.to tag変換ロジック：英語tagは全て小文字かつ英数字のみ、他の言語はそのまま
-  const normalizeDevToTag = (tag) => {
-    // 英語文字を含むか判定
-    const hasEnglish = /[a-zA-Z]/.test(tag);
-
-    if (hasEnglish) {
-      // 英語tag：小文字変換 + 英数字のみ（スペース、ハイフンなど全て削除）
-      return tag.toLowerCase()
-        .replace(/[^a-zA-Z0-9]/g, "")
-        .substring(0, 30);
-    } else {
-      // 他の言語（日本語など）：そのまま
-      return tag;
-    }
-  };
-
   const devtoTags = rawTags.slice(0, 4).map(normalizeDevToTag);
   
   // フロントマター構築
@@ -305,5 +304,6 @@ module.exports = {
   getModifiedArticles,
   getAllArticlesForConversion,
   convertToQiita,
-  convertToDevTo
+  convertToDevTo,
+  normalizeDevToTag
 };

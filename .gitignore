@@ -152,10 +152,9 @@ config/local.json
 temp/
 .env.local
 
- # Auto-generated platform folders (not committed)
- # dev-to ディレクトリ内のすべての .md ファイルを無視します（日语版和英语版都是本地的）
- dev-to/*.md
- qiita/
+  # Auto-generated platform folders (not committed)
+  qiita/
+  dev-to/
 
  # 公開済み記事メタデータバックアップ
  config/published-articles.json.backup
