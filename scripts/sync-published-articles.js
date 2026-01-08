@@ -202,8 +202,13 @@ async function main() {
   for (const article of devtoArticles) {
     let key = null;
     let lang = 'ja'; // デフォルトは日本語
+    const normalize = (str) => str
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-");
 
-    // 優先: dev-toディレクトリの英語版ファイルをチェック
+    // 優先1: dev-toディレクトリの英語版ファイルをタイトルでマッチ
     const devtoDir = path.join(process.cwd(), "dev-to");
     if (fs.existsSync(devtoDir)) {
       const devtoFiles = fs.readdirSync(devtoDir).filter((f) => f.endsWith("-en.md"));
@@ -213,27 +218,43 @@ async function main() {
         const devtoContent = fs.readFileSync(devtoFilePath, "utf8");
         const parsed = matter(devtoContent);
 
-        // ファイル内のタイトルとDev.toのタイトルを比較
-        const normalize = (str) => str
-          .toLowerCase()
-          .replace(/[^\w\s-]/g, "")
-          .replace(/\s+/g, "-")
-          .replace(/-+/g, "-");
         const normalizedFileTitle = normalize(parsed.data.title || "");
         const normalizedDevTitle = normalize(article.title);
 
         if (normalizedFileTitle === normalizedDevTitle) {
           key = devtoFile.replace("-en.md", "");
           lang = 'en';
+          console.log(`  🎯 Dev.to英語版マッチ: ${key} (ファイル: ${devtoFile})`);
           break;
         }
       }
     }
 
-    // 英語版が見つからない場合、日本語版をチェック
+    // 優先2: 記事IDが既にpublished-articles.jsonに存在する場合、それを優先
+    if (!key) {
+      for (const [existingKey, meta] of Object.entries(publishedMeta)) {
+        if (meta.devto) {
+          const checkLangs = ['en', 'ja'];
+          for (const checkLang of checkLangs) {
+            if (meta.devto[checkLang]?.id === article.id) {
+              key = existingKey;
+              lang = checkLang;
+              console.log(`  🎯 Dev.to既存IDマッチ: ${key} (言語: ${lang}, ID: ${article.id})`);
+              break;
+            }
+          }
+        }
+        if (key) break;
+      }
+    }
+
+    // 優先3: 日本語版をタイトルでマッチ
     if (!key) {
       key = guessArticleKey(article.title, localArticles);
       lang = 'ja';
+      if (key) {
+        console.log(`  🎯 Dev.to日本語版マッチ: ${key}`);
+      }
     }
 
     if (key) {

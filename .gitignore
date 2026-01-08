@@ -153,12 +153,11 @@ temp/
 .env.local
 
 # Auto-generated platform folders (not committed)
-qiita/
-dev-to/
+ qiita/
+# dev-to/ is now committed (manual English articles are stored here)
 
- # 公開済み記事メタデータ（リモートに公開しない）
- config/published-articles.json
- config/published-articles.json.backup
+ # 公開済み記事メタデータバックアップ（リモートに公開しない）
+  config/published-articles.json.backup
 
 # テスト・一時ドキュメント
 docs/DEVTO_FIX.md
