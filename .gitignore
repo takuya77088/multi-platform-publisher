@@ -148,21 +148,24 @@ config/local.json
 *.key
 *.pem
 
-# Temporary files
-temp/
-.env.local
-
-  # Auto-generated platform folders (not committed)
-  qiita/
-  dev-to/
-
+ # Temporary files
+ temp/
+ .env.local
+ 
+ # Auto-generated platform folders (not committed)
+ qiita/
+ dev-to/
+ 
  # 公開済み記事メタデータバックアップ
  config/published-articles.json.backup
-
+ 
  # テスト・一時ドキュメント
  docs/DEVTO_FIX.md
  docs/DEVTO_TEST.md
  docs/TAG_RULES_UPDATE.md
  docs/TEST_REPORT.md
  docs/VERIFICATION_REPORT.md
-
+ 
+ # テストスクリプト
+ scripts/check-metadata.js
+ 
