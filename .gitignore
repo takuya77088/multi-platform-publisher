@@ -159,3 +159,10 @@ temp/
  # 公開済み記事メタデータバックアップ
  config/published-articles.json.backup
 
+ # テスト・一時ドキュメント
+ docs/DEVTO_FIX.md
+ docs/DEVTO_TEST.md
+ docs/TAG_RULES_UPDATE.md
+ docs/TEST_REPORT.md
+ docs/VERIFICATION_REPORT.md
+
