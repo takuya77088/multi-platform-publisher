@@ -156,8 +156,9 @@ temp/
 qiita/
 dev-to/
 
-# 公開済み記事メタデータバックアップ
-config/published-articles.json.backup
+ # 公開済み記事メタデータ（リモートに公開しない）
+ config/published-articles.json
+ config/published-articles.json.backup
 
 # テスト・一時ドキュメント
 docs/DEVTO_FIX.md
