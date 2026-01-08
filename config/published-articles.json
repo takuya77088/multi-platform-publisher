@@ -132,10 +132,18 @@
       "en": {
         "id": 3157718,
         "url": "https://dev.to/nakamura_takuya/2026-guide-design-principles-that-dramatically-improve-ai-code-generation-np8"
-      },
-      "ja": {
-        "id": 3127776,
-        "url": "https://dev.to/nakamura_takuya/mastering-claude-code-34-efficiency-hacks-for-ai-era-api-development-3c0c"
+      }
+    }
+  },
+  "20260108-test-multiplatform-publish": {
+    "qiita": {
+      "id": "d5454fbb69cde9889eb5",
+      "url": "https://qiita.com/kazuya828/items/d5454fbb69cde9889eb5"
+    },
+    "devto": {
+      "en": {
+        "id": 3157766,
+        "url": "https://dev.to/nakamura_takuya/test-article-multi-platform-publishing-verification-1lad"
       }
     }
   }
