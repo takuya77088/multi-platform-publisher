@@ -38,7 +38,7 @@ async function publishToQiita(articleKey, title, body, tags) {
   };
 
   // publishedMetaからIDを取得（最新の状態を確認）
-  const qiitaId = publishedMeta[articleKey]?.qiita_id;
+  const qiitaId = publishedMeta[articleKey]?.qiita?.id;
 
   const payload = {
     title,
@@ -149,19 +149,9 @@ async function main() {
 
       // 変換済みファイルからタグなどを取得
       const qiitaTags = qiitaParsed.data.tags || [];
-      
-      // 変換済みファイルにIDがある場合は、それを優先（convert-articles.jsで設定されたもの）
-      // ただし、publishedMetaにもIDがある場合は、それを使用（より確実）
-      const fileId = qiitaParsed.data.id;
-      const metaId = publishedMeta[key]?.qiita_id;
-      const finalId = metaId || fileId || null;
-      
-      // publishedMetaを一時的に更新（関数内で使用するため）
-      if (finalId && !metaId) {
-        if (!publishedMeta[key]) publishedMeta[key] = {};
-        publishedMeta[key].qiita_id = finalId;
-        console.log(`  ℹ️  変換ファイルからIDを取得: ${finalId}`);
-      }
+
+      // publishedMetaからIDを取得（正しい構造でアクセス）
+      const metaId = publishedMeta[key]?.qiita?.id;
 
       // 公開実⾏
       qiitaRes = await publishToQiita(key, qiitaParsed.data.title, qiitaParsed.content, qiitaTags);
