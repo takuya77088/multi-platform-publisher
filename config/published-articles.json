@@ -130,8 +130,12 @@
     },
     "devto": {
       "en": {
-        "id": null,
-        "url": null
+        "id": 3157718,
+        "url": "https://dev.to/nakamura_takuya/2026-guide-design-principles-that-dramatically-improve-ai-code-generation-np8"
+      },
+      "ja": {
+        "id": 3127776,
+        "url": "https://dev.to/nakamura_takuya/mastering-claude-code-34-efficiency-hacks-for-ai-era-api-development-3c0c"
       }
     }
   }
