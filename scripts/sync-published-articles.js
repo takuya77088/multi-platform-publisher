@@ -22,7 +22,7 @@ if (fs.existsSync(META_FILE)) {
 // ------------------------------------------------------------
 async function fetchQiitaArticles(username) {
   const qiitaToken = process.env.QIITA_API_TOKEN;
-  
+
   if (!qiitaToken) {
     console.log("⏭️  QIITA_API_TOKEN が未設定のため、Qiita からの同期をスキップします");
     return [];
@@ -57,7 +57,7 @@ async function fetchQiitaArticles(username) {
 // ------------------------------------------------------------
 async function fetchDevToArticles(username) {
   const devKey = process.env.DEV_TO_API_KEY;
-  
+
   if (!devKey) {
     console.log("⏭️  DEV_TO_API_KEY が未設定のため、Dev.to からの同期をスキップします");
     return [];
@@ -93,12 +93,12 @@ async function fetchDevToArticles(username) {
 function getLocalArticles() {
   const matter = require("gray-matter");
   const files = fs.readdirSync(ARTICLES_DIR).filter((f) => f.endsWith(".md"));
-  
+
   return files.map(file => {
     const filePath = path.join(ARTICLES_DIR, file);
     const content = fs.readFileSync(filePath, "utf8");
     const parsed = matter(content);
-    
+
     return {
       key: file.replace(".md", ""),
       title: parsed.data.title || "",
@@ -117,29 +117,42 @@ function guessArticleKey(title, localArticles) {
     .replace(/[^\w\s-]/g, "")
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-");
-  
+
   const normalizedTitle = normalize(title);
-  
+
+  // 正規化後のタイトルが空の場合はマッチングをスキップ（日本語のみのタイトルなどで発生する誤検知を防止）
+  if (!normalizedTitle || normalizedTitle.trim() === "") {
+    return null;
+  }
+
   // 1. タイトルで完全一致を探す
   for (const article of localArticles) {
     if (article.title) {
       const normalizedLocalTitle = normalize(article.title);
+
+      // ローカル記事の正規化タイトルが空の場合もスキップ
+      if (!normalizedLocalTitle || normalizedLocalTitle.trim() === "") continue;
+
       if (normalizedLocalTitle === normalizedTitle) {
         return article.key;
       }
     }
   }
-  
+
   // 2. タイトルで部分一致を探す
   for (const article of localArticles) {
     if (article.title) {
       const normalizedLocalTitle = normalize(article.title);
+
+      // ローカル記事の正規化タイトルが空の場合もスキップ
+      if (!normalizedLocalTitle || normalizedLocalTitle.trim() === "") continue;
+
       if (normalizedLocalTitle.includes(normalizedTitle) || normalizedTitle.includes(normalizedLocalTitle)) {
         return article.key;
       }
     }
   }
-  
+
   // 3. ファイル名で部分一致を探す
   for (const article of localArticles) {
     const normalizedKey = normalize(article.key).replace(/^\d{8}-/, ""); // 日付プレフィックスを除去
@@ -147,7 +160,7 @@ function guessArticleKey(title, localArticles) {
       return article.key;
     }
   }
-  
+
   return null;
 }
 
@@ -284,7 +297,7 @@ async function main() {
 
   // ファイルに保存
   fs.writeFileSync(META_FILE, JSON.stringify(publishedMeta, null, 2));
-  
+
   console.log(`\n🎉 同期完了!`);
   console.log(`  📊 更新: ${updatedCount}件`);
   console.log(`  📊 新規: ${newCount}件`);
