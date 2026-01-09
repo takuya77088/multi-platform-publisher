@@ -259,8 +259,8 @@ function main() {
       
       // 記事キー（ファイル名から拡張子を除いたもの）
       const articleKey = article.slug;
-      const qiitaId = publishedMeta[articleKey]?.qiita_id;
-      
+      const qiitaId = publishedMeta[articleKey]?.qiita?.id;
+
       // 既存のIDベースのファイルを削除（重複を避けるため）
       if (qiitaId) {
         const oldIdPath = path.join(qiitaDir, `${qiitaId}.md`);
@@ -268,12 +268,12 @@ function main() {
           console.log(`  🗑️  既存のIDベースファイルを削除: ${qiitaId}.md`);
           fs.unlinkSync(oldIdPath);
         }
-        
+
         // frontmatterにIDを設定
         const yaml = require('js-yaml');
         const parsed = matter(qiitaArticle.fullContent);
         parsed.data.id = qiitaId;
-        parsed.data.updated_at = publishedMeta[articleKey]?.qiita_url ? new Date().toISOString() : '';
+        parsed.data.updated_at = publishedMeta[articleKey]?.qiita?.url ? new Date().toISOString() : '';
         const frontmatterStr = yaml.dump(parsed.data, { lineWidth: -1 }).trim();
         qiitaArticle.fullContent = `---\n${frontmatterStr}\n---\n\n${parsed.content}`;
       }
