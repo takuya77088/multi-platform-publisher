@@ -221,7 +221,35 @@ async function main() {
       .replace(/\s+/g, "-")
       .replace(/-+/g, "-");
 
-    // 優先1: dev-toディレクトリの英語版ファイルをタイトルでマッチ
+    // 優先1: 記事IDが既にpublished-articles.jsonに存在する場合、それを優先（重複を防ぐ）
+    let foundByExistingId = false;
+    for (const [existingKey, meta] of Object.entries(publishedMeta)) {
+      if (meta.devto) {
+        const checkLangs = ['en', 'ja'];
+        for (const checkLang of checkLangs) {
+          if (meta.devto[checkLang]?.id === article.id) {
+            key = existingKey;
+            lang = checkLang;
+            console.log(`  🎯 Dev.to既存IDマッチ: ${key} (言語: ${lang}, ID: ${article.id})`);
+            foundByExistingId = true;
+            break;
+          }
+        }
+      }
+      if (foundByExistingId) break;
+    }
+
+    // 既存IDで見つかった場合は、URLだけ更新して次へ
+    if (foundByExistingId) {
+      if (publishedMeta[key].devto[lang].url !== article.url) {
+        publishedMeta[key].devto[lang].url = article.url;
+        updatedCount++;
+        console.log(`  ✅ Dev.to${lang === 'en' ? '英語版' : '日本語版'}: ${key} -> URL更新`);
+      }
+      continue; // 次の記事へ
+    }
+
+    // 優先2: dev-toディレクトリの英語版ファイルをタイトルでマッチ
     const devtoDir = path.join(process.cwd(), "dev-to");
     if (fs.existsSync(devtoDir)) {
       const devtoFiles = fs.readdirSync(devtoDir).filter((f) => f.endsWith("-en.md"));
@@ -237,36 +265,33 @@ async function main() {
         if (normalizedFileTitle === normalizedDevTitle) {
           key = devtoFile.replace("-en.md", "");
           lang = 'en';
+
+          // 既にこのkeyに英語版が存在する場合はスキップ（重複防止）
+          if (publishedMeta[key]?.devto?.en?.id && publishedMeta[key].devto.en.id !== article.id) {
+            console.log(`  ⚠️  Dev.to英語版重複スキップ: ${key} (既存ID: ${publishedMeta[key].devto.en.id}, 新ID: ${article.id})`);
+            key = null;
+            break;
+          }
+
           console.log(`  🎯 Dev.to英語版マッチ: ${key} (ファイル: ${devtoFile})`);
           break;
         }
       }
     }
 
-    // 優先2: 記事IDが既にpublished-articles.jsonに存在する場合、それを優先
-    if (!key) {
-      for (const [existingKey, meta] of Object.entries(publishedMeta)) {
-        if (meta.devto) {
-          const checkLangs = ['en', 'ja'];
-          for (const checkLang of checkLangs) {
-            if (meta.devto[checkLang]?.id === article.id) {
-              key = existingKey;
-              lang = checkLang;
-              console.log(`  🎯 Dev.to既存IDマッチ: ${key} (言語: ${lang}, ID: ${article.id})`);
-              break;
-            }
-          }
-        }
-        if (key) break;
-      }
-    }
-
-    // 優先3: 日本語版をタイトルでマッチ
+    // 優先3: 日本語版をタイトルでマッチ（英語版が見つからなかった場合のみ）
     if (!key) {
       key = guessArticleKey(article.title, localArticles);
-      lang = 'ja';
       if (key) {
-        console.log(`  🎯 Dev.to日本語版マッチ: ${key}`);
+        lang = 'ja';
+
+        // 既にこのkeyに日本語版が存在する場合はスキップ（重複防止）
+        if (publishedMeta[key]?.devto?.ja?.id && publishedMeta[key].devto.ja.id !== article.id) {
+          console.log(`  ⚠️  Dev.to日本語版重複スキップ: ${key} (既存ID: ${publishedMeta[key].devto.ja.id}, 新ID: ${article.id})`);
+          key = null;
+        } else {
+          console.log(`  🎯 Dev.to日本語版マッチ: ${key}`);
+        }
       }
     }
 
