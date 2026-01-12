@@ -8,6 +8,7 @@ const path = require("path");
 const axios = require("axios");
 const matter = require("gray-matter");
 const { convertToDevTo, normalizeDevToTag } = require("./convert-articles.js");
+const { execSync } = require("child_process");
 
 // ------------------------------------------------------------
 // 定数定義
@@ -83,9 +84,54 @@ async function publishToDevTo(article) {
 }
 
 // ------------------------------------------------------------
+// Git差分から変更された記事のみ取得
+// ------------------------------------------------------------
+function getModifiedArticles(forceAll = false) {
+  if (forceAll) {
+    console.log("🧪 全記事を対象とします");
+    return loadMarkdownFiles();
+  }
+
+  try {
+    const gitDiffCommand = "git diff --name-only HEAD~1 HEAD -- articles/";
+    const modifiedFiles = execSync(gitDiffCommand, { encoding: "utf8" })
+      .trim()
+      .split("\n")
+      .filter((file) => file && file.endsWith(".md"));
+
+    console.log(`🔍 Git差分検出: ${modifiedFiles.length}件の変更ファイル`);
+
+    if (modifiedFiles.length === 0) {
+      return [];
+    }
+
+    return modifiedFiles.map((file) => {
+      const key = path.basename(file, ".md");
+      const fullPath = path.join(process.cwd(), file);
+      const mdContent = fs.readFileSync(fullPath, "utf8");
+      const { data, content } = matter(mdContent);
+
+      return {
+        key,
+        file,
+        fullPath,
+        frontmatter: data,
+        content,
+        isDraft: data?.draft === true,
+      };
+    });
+  } catch (error) {
+    console.error("❌ Git差分取得に失敗しました:", error.message);
+    console.error("🛑 安全のため、記事の処理をスキップします");
+    console.error("   --all フラグを使用すると全記事を強制的に処理できます");
+    return []; // 🔥 修正：失敗時は空配列を返す（全記事を処理しない）
+  }
+}
+
+// ------------------------------------------------------------
 // Markdown 記事の読み込み
 // ------------------------------------------------------------
-function loadMarkdownFiles() {
+function loadMarkdownFiles(targetKey = null) {
   const files = fs.readdirSync(ARTICLES_DIR).filter((f) => f.endsWith(".md"));
 
   return files.map((file) => {
@@ -101,20 +147,39 @@ function loadMarkdownFiles() {
       content,
       isDraft: data?.draft === true,
     };
+  }).filter(article => {
+    if (targetKey) {
+      return article.key === targetKey;
+    }
+    return true;
   });
 }
 
 // ------------------------------------------------------------
 // メイン処理
 // ------------------------------------------------------------
-// ------------------------------------------------------------
-// メイン処理
-// ------------------------------------------------------------
 async function main() {
   console.log("🚀 Multi-platform publishing started...\n");
 
-  // 元記事（Zenn形式）のリストを取得 - これをマスターリストとする
-  const articles = loadMarkdownFiles();
+  const args = process.argv.slice(2);
+  const targetKey = args.find((arg) => arg.startsWith("--article="))?.split("=")[1];
+  const isForceAll = args.includes("--all") || args.includes("--force");
+
+  let articles = [];
+
+  if (targetKey) {
+    console.log(`🎯 特定記事のみ処理: ${targetKey}`);
+    articles = loadMarkdownFiles(targetKey);
+  } else {
+    articles = getModifiedArticles(isForceAll);
+  }
+
+  if (articles.length === 0) {
+    console.log("✅ 変更された記事がありません。公開処理をスキップします。\n");
+    return;
+  }
+
+  console.log(`📝 ${articles.length}件の記事を処理対象とします\n`);
 
   for (const article of articles) {
     const { key, frontmatter } = article;
@@ -189,6 +254,8 @@ async function main() {
         // Dev.to tag正規化（共通関数を使用）
         devtoEnTags = devtoEnTags.slice(0, 4).map(normalizeDevToTag);
 
+        console.log(`  📌 使用するtag: ${devtoEnTags.join(", ")}`);
+
         const payloadEn = {
           article: {
             title: devtoEnParsed.data.title,
@@ -203,7 +270,9 @@ async function main() {
       } else {
         // 日本語版を投稿（articles/から自動変換）
         console.log(`  📝 Dev.to日本語版を投稿（articles/から自動変換）`);
-        
+        console.log(`  ⚠️  注意: 日本語tagはDev.to APIにより英語に翻訳される可能性があります`);
+        console.log(`  💡 英語版（dev-to/${key}-en.md）を作成して英語tagを指定することを推奨します`);
+
         // articles/から読み込んで変換
         const devtoArticle = convertToDevTo(article);
         if (devtoArticle) {
@@ -215,7 +284,9 @@ async function main() {
               tags: devtoArticle.frontmatter.tags || [],
             }
           };
-          
+
+          console.log(`  📌 使用するtag: ${(devtoArticle.frontmatter.tags || []).join(", ")}`);
+
           devtoRes = await publishToDevToWithPayload(key, payload, "ja");
         } else {
           console.log(`  ⏭️  Dev.to変換スキップ（プラットフォーム指定）`);

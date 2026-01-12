@@ -58,8 +58,10 @@ function getModifiedArticles(forceAll = false) {
       return article.frontmatter.published || hasPlatformEnabled;
     });
   } catch (error) {
-    console.log('⚠️  Git差分取得に失敗、全記事を変換対象とします');
-    return getAllArticlesForConversion();
+    console.error('❌ Git差分取得に失敗しました:', error.message);
+    console.error('🛑 安全のため、記事の変換をスキップします');
+    console.error('   --all フラグを使用すると全記事を強制的に変換できます');
+    return []; // 🔥 修正：失敗時は空配列を返す（全記事を処理しない）
   }
 }
 
@@ -171,6 +173,9 @@ slide: false`;
 // - 英語tag: 全て小文字 + スペース・記号削除（例: AI Development → aidevelopment, node.js → nodejs）
 // - 混合tag: 英語部分を小文字 + スペース・記号削除（例: AI 開発 → ai開発）
 // - 日本語tag: そのまま（例: 開発 → 開発）
+//
+// 注意: Dev.to APIは日本語タグを自動的に英語に翻訳する可能性があります
+// 英語版記事（dev-to/xxx-en.md）で英語タグを明示的に指定することを推奨します
 function normalizeDevToTag(tag) {
   const hasEnglish = /[a-zA-Z]/.test(tag);
 
@@ -179,6 +184,11 @@ function normalizeDevToTag(tag) {
     normalized = normalized.replace(/[a-zA-Z]/g, (match) => match.toLowerCase());
     return normalized.substring(0, 30);
   } else {
+    // 日本語のみのtagの場合、Dev.to APIが自動翻訳する可能性を警告
+    const isJapanese = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(tag);
+    if (isJapanese) {
+      console.warn(`    ⚠️  日本語tag「${tag}」はDev.to APIにより英語に翻訳される可能性があります`);
+    }
     return tag;
   }
 }
