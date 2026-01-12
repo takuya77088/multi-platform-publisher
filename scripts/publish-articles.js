@@ -164,6 +164,7 @@ async function main() {
   const args = process.argv.slice(2);
   const targetKey = args.find((arg) => arg.startsWith("--article="))?.split("=")[1];
   const isForceAll = args.includes("--all") || args.includes("--force");
+  const allowUpdate = args.includes("--update") || args.includes("--force-update");
 
   let articles = [];
 
@@ -179,7 +180,14 @@ async function main() {
     return;
   }
 
-  console.log(`📝 ${articles.length}件の記事を処理対象とします\n`);
+  console.log(`📝 ${articles.length}件の記事を処理対象とします`);
+
+  if (!allowUpdate) {
+    console.log("ℹ️  更新モード: 既存記事の更新はスキップします");
+    console.log("   既存記事を更新する場合は --update フラグを使用してください\n");
+  } else {
+    console.log("⚠️  更新モード: 既存記事も更新します\n");
+  }
 
   for (const article of articles) {
     const { key, frontmatter } = article;
@@ -218,8 +226,14 @@ async function main() {
       // publishedMetaからIDを取得（正しい構造でアクセス）
       const metaId = publishedMeta[key]?.qiita?.id;
 
-      // 公開実⾏
-      qiitaRes = await publishToQiita(key, qiitaParsed.data.title, qiitaParsed.content, qiitaTags);
+      // 既存記事の更新保護チェック
+      if (metaId && !allowUpdate) {
+        console.log(`  ⏭️  Qiita: 既存記事のため更新をスキップ (ID: ${metaId})`);
+        console.log(`       更新する場合は --update フラグを使用してください`);
+      } else {
+        // 公開実⾏
+        qiitaRes = await publishToQiita(key, qiitaParsed.data.title, qiitaParsed.content, qiitaTags);
+      }
     } else if (!shouldPublishToQiita) {
       console.log(`  ⏭️  Qiitaへの投稿が無効化されています（platforms.qiita: false）`);
     } else {
@@ -237,7 +251,13 @@ async function main() {
     if (!shouldPublishToDevTo) {
       console.log(`  ⏭️  Dev.toへの投稿が無効化されています（platforms.devto: false）`);
     } else {
-      if (fs.existsSync(devtoEnPath)) {
+      // 既存記事の更新保護チェック（言語に関係なく、既にDev.toに投稿済みかチェック）
+      const hasDevToId = publishedMeta[key]?.devto?.en?.id || publishedMeta[key]?.devto?.ja?.id;
+
+      if (hasDevToId && !allowUpdate) {
+        console.log(`  ⏭️  Dev.to: 既存記事のため更新をスキップ (ID: ${hasDevToId})`);
+        console.log(`       更新する場合は --update フラグを使用してください`);
+      } else if (fs.existsSync(devtoEnPath)) {
         // 英語版を投稿（手動作成されたファイル）
         console.log(`  🌐 Dev.to英語版（手動作成）を検出: ${devtoEnPath}`);
 
