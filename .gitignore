@@ -156,8 +156,9 @@ temp/
 qiita/public/
 qiita/.DS_Store
 
-# Dev.to articles are manually created (not auto-committed)
-dev-to/
+# Dev.to articles are manually created
+# 注意: dev-to/ は GitHub Actions との動作統一のため、Git に含める必要があります
+# dev-to/
 
 # Published articles metadata (not committed to remote)
 config/published-articles.json
