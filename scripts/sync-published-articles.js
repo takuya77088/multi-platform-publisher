@@ -281,16 +281,28 @@ async function main() {
 
     // 優先3: 日本語版をタイトルでマッチ（英語版が見つからなかった場合のみ）
     if (!key) {
-      key = guessArticleKey(article.title, localArticles);
-      if (key) {
-        lang = 'ja';
+      const matchedKey = guessArticleKey(article.title, localArticles);
+      if (matchedKey) {
+        // 英語版ファイルが存在するかチェック
+        const enFilePath = path.join(devtoDir, `${matchedKey}-en.md`);
+        const hasEnFile = fs.existsSync(enFilePath);
 
-        // 既にこのkeyに日本語版が存在する場合はスキップ（重複防止）
-        if (publishedMeta[key]?.devto?.ja?.id && publishedMeta[key].devto.ja.id !== article.id) {
-          console.log(`  ⚠️  Dev.to日本語版重複スキップ: ${key} (既存ID: ${publishedMeta[key].devto.ja.id}, 新ID: ${article.id})`);
-          key = null;
+        // 既に英語版が存在する場合は日本語版をスキップ（重複防止）
+        const hasEnVersion = publishedMeta[matchedKey]?.devto?.en?.id || hasEnFile;
+
+        if (hasEnVersion) {
+          console.log(`  ⏭️  Dev.to日本語版スキップ: ${matchedKey} (英語版が存在するため)`);
         } else {
-          console.log(`  🎯 Dev.to日本語版マッチ: ${key}`);
+          key = matchedKey;
+          lang = 'ja';
+
+          // 既にこのkeyに日本語版が存在する場合はスキップ（重複防止）
+          if (publishedMeta[key]?.devto?.ja?.id && publishedMeta[key].devto.ja.id !== article.id) {
+            console.log(`  ⚠️  Dev.to日本語版重複スキップ: ${key} (既存ID: ${publishedMeta[key].devto.ja.id}, 新ID: ${article.id})`);
+            key = null;
+          } else {
+            console.log(`  🎯 Dev.to日本語版マッチ: ${key}`);
+          }
         }
       }
     }
