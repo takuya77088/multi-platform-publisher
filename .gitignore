@@ -160,11 +160,6 @@ temp/
 qiita/public/
 qiita/.DS_Store
 
-# Dev.to articles are manually created
-# ⚠️ 重要: dev-to/ は常にリモートリポジトリに表示されません
-# 英語版の投稿は npm run publish でローカルから行ってください
-dev-to/
-
 # Published articles metadata (not committed to remote)
 config/published-articles.json
 config/published-articles.json.backup
