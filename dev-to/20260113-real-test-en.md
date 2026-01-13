@@ -1,8 +1,7 @@
 ---
-title: "System Operation Verification Test"
+title: "System Operation Verification Test-2"
 published: true
-tags: ["testing", "automation", "verification"]
-canonical_url: null
+tags: ["Testing", "Automation", "Verification"]
 description: "A comprehensive test to verify that the multi-platform publishing system works correctly across Zenn, Qiita, and Dev.to."
 ---
 
@@ -28,28 +27,11 @@ This article serves as a comprehensive test to verify all system functionalities
 
 ### 2. Tag Handling Verification
 
-**Expected Results**:
-- ✅ Zenn: `["test", "automation", "verification"]`
-- ✅ Qiita: `["test", "automation", "verification"]`
-- ✅ Dev.to: `["testing", "automation", "verification"]`
 
 ### 3. Metadata Recording
 
-The system should:
-- ✅ Create entries in `published-articles.json`
-- ✅ Record platform-specific IDs
-- ✅ Record article URLs
 
 ## Success Criteria
 
-This test is successful if:
-
-1. ✅ Article appears on all 3 platforms (Zenn, Qiita, Dev.to)
-2. ✅ Tags are correct on each platform
-3. ✅ Only this new article is processed
-4. ✅ IDs are correctly recorded in `published-articles.json`
-5. ✅ No duplicate articles are created
-
----
 
 **System Status**: Testing in progress... 🧪
