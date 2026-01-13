@@ -161,7 +161,8 @@ qiita/public/
 qiita/.DS_Store
 
 # Dev.to articles are manually created
-# 注意: 英語版を投稿する場合のみ、git add -f dev-to/*-en.md で強制追加
+# ⚠️ 重要: dev-to/ は常にリモートリポジトリに表示されません
+# 英語版の投稿は npm run publish でローカルから行ってください
 dev-to/
 
 # Published articles metadata (not committed to remote)
