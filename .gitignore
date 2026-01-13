@@ -157,8 +157,8 @@ qiita/public/
 qiita/.DS_Store
 
 # Dev.to articles are manually created
-# 注意: dev-to/ は GitHub Actions との動作統一のため、Git に含める必要があります
-# dev-to/
+# 注意: 英語版を投稿する場合のみ、git add -f dev-to/*-en.md で強制追加
+dev-to/
 
 # Published articles metadata (not committed to remote)
 config/published-articles.json
