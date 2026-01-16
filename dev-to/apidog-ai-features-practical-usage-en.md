@@ -10,7 +10,7 @@ Writing API test cases is tedious work.
 
 Happy path tests are manageable, but once you start thinking about error cases and edge cases, you're like "when is this ever going to end..." When you see an API with 10 parameters, the combinatorial explosion alone gives you a headache.
 
-That's when I discovered [Apidog](http://www.apidog.com/) had this "AI-powered automatic test case generation" feature. Honestly, I was skeptical at first—"this probably won't work"—but after trying it, it turned out to be way more practical than I expected.
+That's when I discovered [Apidog](https://www.apidog.com/?utm_source=opr&utm_medium=a2devto1&utm_content=test-case-generation) had this "AI-powered automatic test case generation" feature. Honestly, I was skeptical at first—"this probably won't work"—but after trying it, it turned out to be way more practical than I expected.
 
 
 
@@ -65,7 +65,7 @@ After actually using it, here are some things you should be aware of:
 
 ## Setup Required: You Need an API Key
 
-Apidog doesn't provide its own AI model. So you need to get an API key from an external AI service like OpenAI or Claude and configure it yourself.
+[Apidog](https://www.apidog.com/?utm_source=opr&utm_medium=a2devto1&utm_content=test-case-generation) doesn't provide its own AI model. So you need to get an API key from an external AI service like OpenAI or Claude and configure it yourself.
 
 The important thing here is that **the quality of generated test cases depends on the model's performance**. I tried using Gemini 3 Pro and got pretty practical cases. With free models, you might get more generic content.
 
