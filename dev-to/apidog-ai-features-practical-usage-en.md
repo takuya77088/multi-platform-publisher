@@ -31,7 +31,7 @@ If AI could create a draft, it would at least give me a starting point for "what
 
 ## Simple to Use: Just Click a Button to Start Generation
 
-![apidog](https://raw.githubusercontent.com/takuya77088/multi-platform-publisher/main/images/20250115-apidog2e.png)
+![apidog](https://raw.githubusercontent.com/takuya77088/multi-platform-publisher/main/images/20250115-apidog22e.png)
 
 After defining your API, open the "Test Cases" tab. There's a button in the middle of the screen that says "Generate with AI"—click it.
 
@@ -61,7 +61,7 @@ After actually using it, here are some things you should be aware of:
 * **Error cases and edge cases aren't perfect**
   AI won't cover everything, so review is essential.
 
-
+![apidog](https://raw.githubusercontent.com/takuya77088/multi-platform-publisher/main/images/20250115-apidog3e.png)
 
 ## Setup Required: You Need an API Key
 
@@ -85,7 +85,7 @@ You get 10-20 drafts in a few minutes. What would take 30+ minutes to write by h
 
 Especially for complex business logic cases, AI alone can't cover everything. But for basic happy paths and common error cases (null checks, type errors, etc.), it's totally usable.
 
-
+![apidog](https://raw.githubusercontent.com/takuya77088/multi-platform-publisher/main/images/20250115-apidog4e.png)
 
 ## How I Use It
 
