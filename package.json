@@ -7,6 +7,8 @@
     "convert": "node scripts/convert-articles.js",
     "publish": "node scripts/publish-articles.js",
     "publish:dry": "echo '🧪 Dry run mode - no actual publishing' && npm run convert",
+    "deploy": "git push && bash scripts/post-push-sync.sh",
+    "publish:all": "npm run deploy",
     "preview:zenn": "npx zenn preview",
     "preview:qiita": "npm run convert && npx qiita preview --root qiita --config config/qiita.config.json",
     "preview:all": "concurrently \"npm run preview:zenn\" \"npm run preview:qiita\"",
