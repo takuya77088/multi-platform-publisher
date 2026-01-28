@@ -42,10 +42,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/pipipi-dev/multi-platform-publisher.git"
+    "url": "https://github.com/takuya77088/multi-platform-publisher.git"
   },
   "bugs": {
-    "url": "https://github.com/pipipi-dev/multi-platform-publisher/issues"
+    "url": "https://github.com/takuya77088/multi-platform-publisher/issues"
   },
-  "homepage": "https://github.com/pipipi-dev/multi-platform-publisher#readme"
+  "homepage": "https://github.com/takuya77088/multi-platform-publisher#readme"
 }
